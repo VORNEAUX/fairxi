@@ -1,0 +1,23 @@
+{
+  "summary": "Backend smoke + primary UI flow verified for FairXI. Demo seed intact (Ben=MVP, share=$10). Create match, duplicate phone rejection (400), match full (400), invalid admin token (403), self-vote (400), vote-before-open (400), snake-draft team generation, and history all pass. Frontend home + create flow works end-to-end.",
+  "tested_scope": ["backend", "frontend", "integration"],
+  "passed": [
+    "GET /api/demo returns match_id",
+    "GET /api/matches/{id} returns 10 players, share_per_player=10.0, admin_token not leaked",
+    "GET /api/matches/{id}/mvp/results returns MVP=Ben with 4 votes",
+    "POST /api/matches creates match with admin_token + links",
+    "POST /api/matches/{id}/join: 6 players joined; duplicate phone -> 400; 7th (full) -> 400",
+    "Admin wrong token on generate-teams -> 403",
+    "generate-teams distributes players via snake draft (Team1 total=8, Team2 total=6 for 6 mixed-rating players)",
+    "Vote before open-mvp -> 400; self-vote after open -> 400",
+    "History endpoint returns matches_played/avg_rating/mvp_count",
+    "Home UI loads with Ben MVP and $10 share visible; hero-create-btn navigates to /create",
+    "Create form (testids input-name, input-datetime, input-location, input-cost, input-max, submit-create) submits and navigates to /created/:matchId/:adminToken showing admin link, public link, WhatsApp share, MVP link"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true,
+  "notes": "Not exhaustively tested by T1: AdminPanel UI (team-select, pay toggle, mark-played, open-mvp buttons), Vote page UI verify-btn/vote flow, History page UI, waitlist message rendering. These were verified via backend but not clicked through in UI due to latency-sensitive scope."
+}
