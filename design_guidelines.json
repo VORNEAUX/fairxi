@@ -1,0 +1,102 @@
+{
+  "theme_mode": "dark",
+  "typography": {
+    "fonts": {
+      "heading": "Bebas Neue, sans-serif",
+      "body": "Manrope, sans-serif"
+    },
+    "hierarchy": {
+      "h1": "text-5xl sm:text-6xl tracking-tight leading-none font-normal uppercase",
+      "h2": "text-3xl sm:text-4xl tracking-tight leading-none font-normal uppercase",
+      "h3": "text-xl sm:text-2xl font-bold font-body",
+      "h4": "text-lg font-semibold text-white/90 font-body",
+      "body": "text-base text-gray-300 font-body",
+      "label": "text-xs font-bold uppercase tracking-[0.2em] text-accent"
+    },
+    "guidelines": "Use Bebas Neue exclusively for giant, scoreboard-style numbers, massive headers, and high-energy focal points. Use Manrope for everything else (UI components, lists, instructions). Never use generic sans like Inter for headings."
+  },
+  "colors": {
+    "base": "#050A07",
+    "surface": "#0C1812",
+    "surface_glass": "rgba(12, 24, 18, 0.7)",
+    "accent_primary": "#CCFF00",
+    "accent_hover": "#B3E600",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#8F9E96",
+    "border_pitch": "rgba(255, 255, 255, 0.1)",
+    "border_active": "rgba(204, 255, 0, 0.5)",
+    "danger": "#FF3B30",
+    "guidelines": "Cinematic 'stadium at night' palette. Avoid pure black; ground the UI in a deeply recessional near-black green. The volt lime green (#CCFF00) must be used sparingly, like stadium floodlights cutting through the dark—only for primary CTAs, active states, and live scores."
+  },
+  "visual_enhancers": {
+    "textures": "Apply subtle film grain overlay on hero section backgrounds to simulate night photography and reduce digital flatness.",
+    "glassmorphism": "Use backdrop-blur-xl paired with the surface_glass color and a 1px border_pitch stroke. This is mandatory for floating navigation and modal overlays.",
+    "pitch_motifs": "Replace generic SaaS icons with geometric football motifs. A thin 1px white/10 vertical line for dividers. A hollow circle (border-white/10 rounded-full) placed in the absolute background of sections to mimic the center circle of a pitch.",
+    "shadows": "Omit soft, diffuse shadows. Use sharp, glowing shadows for the accent color only, e.g., drop-shadow-[0_0_12px_rgba(204,255,0,0.4)] on the primary button."
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#CCFF00] text-black font-bold uppercase tracking-wider rounded-full px-8 py-4 hover:scale-105 transition-transform duration-200 shadow-[0_0_15px_rgba(204,255,0,0.3)]",
+      "secondary": "border border-white/20 text-white bg-transparent rounded-full px-8 py-4 hover:border-[#CCFF00] hover:text-[#CCFF00] transition-colors duration-200 uppercase font-bold tracking-wider"
+    },
+    "cards": {
+      "style": "bg-[#0C1812] border border-white/10 rounded-none md:rounded-lg p-6 lg:p-8",
+      "hover": "hover:border-white/30 transition-colors"
+    },
+    "inputs": {
+      "style": "bg-[#050A07] border-b border-white/20 text-white rounded-none px-4 py-3 focus:outline-none focus:border-[#CCFF00] transition-colors placeholder:text-white/30 font-body text-lg"
+    },
+    "icons": {
+      "guideline": "Strict minimal use of external icons. Favor custom geometric SVGs (lines, circles, dots). If a library must be used, use lucide-react but keep it abstract (e.g., Circle, Crosshair, ArrowRight). No smiley faces, people icons, or literal 'football' icons."
+    }
+  },
+  "grids_and_layouts": {
+    "mobile_first": "Every screen must be functional on a small mobile device viewport first. Forms (Create Match, MVP voting) must be full-width on mobile with sticky bottom CTAs.",
+    "bento_admin": "Admin dashboard should use a dense, cardless grid layout where panels (players, payments, generate teams) sit tightly adjacent, separated by 1px white/10 borders (like pitch lines).",
+    "spacing": "Generous spacing logic: gap-8 to gap-12 between major vertical sections. Padding within match cards should be p-6."
+  },
+  "motion": {
+    "micro_interactions": "Hover states on all clickable geometries. Slider for MVP voting should have smooth spring-physics tracking.",
+    "page_transitions": "Fade-in entrance for the hero section.",
+    "team_generation": "When teams are generated via snake draft, stagger the appearance of player names (stagger delay 0.1s) to build anticipation."
+  },
+  "accessibility": {
+    "contrast": "Lime green text on black background achieves extreme contrast (WCAG AAA).",
+    "focus": "All interactive elements must display a 2px solid lime green ring (focus:ring-2 focus:ring-[#CCFF00]) upon keyboard focus.",
+    "testing": "All interactive and key informational elements MUST include a data-testid attribute in kebab-case format (e.g., data-testid='create-match-button')."
+  },
+  "media": {
+    "image_urls": {
+      "hero_background": {
+        "url": "https://images.pexels.com/photos/37578663/pexels-photo-37578663.png?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Football stadium under lights at night. Use as a heavily darkened hero background with a radial gradient overlay fading to black at the edges.",
+        "category": "Hero Section"
+      },
+      "player_action": {
+        "url": "https://images.pexels.com/photos/36737328/pexels-photo-36737328.jpeg",
+        "description": "A dramatic silhouette of a soccer player standing in rain with backlit lighting. Good for MVP or Player History sections.",
+        "category": "MVP / Player History Page"
+      }
+    }
+  },
+  "instructions_to_main_agent": [
+    "You are building FairXI: a mobile-first web app for casual football groups.",
+    "Implement the stadium at night theme: #050A07 background, #0C1812 surface cards, and #CCFF00 (Volt Lime) accents.",
+    "Install and use Bebas Neue for headings and Manrope for body text via Google Fonts.",
+    "Avoid standard Shadcn defaults that look like enterprise SaaS. Strip background colors on Shadcn Cards and use pure border-white/10 to mimic pitch lines.",
+    "Build a custom MVP voting slider—do not use standard form inputs; make it a prominent, swipeable interactive element.",
+    "The Live Demo Match on the landing page must feel kinetic. Mock active game states clicking and updating in real-time.",
+    "Use standard semantic HTML sections (header, main, section). Never use transparent backgrounds behind content where scroll collision happens—always use the defined surface_glass."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "Do not converge toward generic AI outputs. Avoid simplistic gradients and uniform padding.",
+    "Create depth through z-index hierarchy and backdrop-blur filters (12-24px blur).",
+    "Do not apply global transition: all; always specify properties like transition-colors or transition-transform.",
+    "Do not center align the app container in global CSS. Optical left-alignment is preferred for UI elements.",
+    "Never use generic AI emojis (🤖🧠) for icons.",
+    "Ensure every form submission, button, and navigation item has a data-testid attribute.",
+    "Use sonner for toast notifications.",
+    "Prioritize Shadcn/UI for logic-heavy components (Dropdowns, Dialogs) but heavily customize their Tailwind classes to fit the pitch/night motif.",
+    "Use the exact image URLs provided in the media section; do not invent or use generic placeholder domain URLs."
+  ]
+}
