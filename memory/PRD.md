@@ -23,8 +23,10 @@ Build a mobile-first web app called FairXI that solves unfair team balancing and
 - **Team balancing** in `snake_draft()`: sort by rating desc → snake distribute → single-pass same-rating swap for position variety.
 
 ## Implemented (2026-02)
-- Backend: /matches CRUD, /join, /generate-teams, /reassign, /payment, /mark-played, /open-mvp, /mvp/vote (real-time results, 24h auto-close), /history, /demo.
-- Frontend: Home (hero + live demo), CreateMatch, MatchCreated (public/admin/vote links, WhatsApp share), JoinPage (with rating slider + waitlist), AdminPanel (roster, generate teams, dropdown reassign, payment checkboxes, mark-played, open-MVP), MVPVoting (phone verify + teammate picker + live bar chart), PlayerHistory.
+- Backend: /matches CRUD, /join, /generate-teams, /reassign, /payment, /mark-played, /open-mvp, /mvp/vote (real-time results, 24h auto-close), /history, /demo, **/bulk-add** (admin-scoped batch player import).
+- Frontend: Home (hero + live demo), CreateMatch (+ **Load Saved Squad**), MatchCreated (public/admin/vote links, WhatsApp share), JoinPage (with rating slider + waitlist + **checkmark success**), AdminPanel (roster, generate teams w/ **stagger animation**, dropdown reassign, payment checkboxes, mark-played, open-MVP, **Save/Load Squad**, **Recap card**), MVPVoting (phone verify + teammate picker + live bar chart + **checkmark on vote** + **Recap Share/Download**), PlayerHistory, **MyMatches (organizer dashboard, localStorage-backed)**.
+- **PWA**: manifest.json, service-worker.js, icon-192/512, apple-touch-icon, standalone install support.
+- **Recap Card**: Canvas 2D 1080×1350 PNG generator with teams grid + MVP hero + FairXI branding. Web Share API with download fallback.
 - Design system: stadium-at-night theme, geometric pitch-line motifs, glassmorphism panels, spin-slow center circles, no generic icons.
 
 ## Backlog
