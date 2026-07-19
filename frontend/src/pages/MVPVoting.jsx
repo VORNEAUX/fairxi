@@ -41,11 +41,14 @@ export default function MVPVoting() {
     return () => clearInterval(i);
   }, [matchId]);
 
-  const verify = (e) => {
+  const verify = async (e) => {
     e.preventDefault();
-    const p = players.find((pl) => pl.phone === phone.trim());
-    if (!p) return toast.error("This phone didn't play in this match");
-    setVoter(p);
+    try {
+      const res = await api.post(`/matches/${matchId}/mvp/verify`, { phone: phone.trim() });
+      setVoter({ ...res.data, phone: phone.trim() });
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "This phone didn't play in this match");
+    }
   };
 
   const castVote = async (targetId) => {

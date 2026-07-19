@@ -29,17 +29,17 @@ MatchStatus = Literal["open", "teams_generated", "played", "mvp_voting_open", "c
 
 # ---------- MODELS ----------
 class MatchCreate(BaseModel):
-    name: Optional[str] = None
-    date_time: str
-    location: str
-    total_cost: float
-    max_players: int
+    name: Optional[str] = Field(default=None, max_length=80)
+    date_time: str = Field(max_length=64)
+    location: str = Field(min_length=1, max_length=120)
+    total_cost: float = Field(ge=0, le=100000)
+    max_players: int = Field(ge=2, le=64)
     num_teams: int = 2
 
 
 class PlayerJoin(BaseModel):
-    name: str
-    phone: str
+    name: str = Field(min_length=1, max_length=60)
+    phone: str = Field(min_length=3, max_length=32)
     position: Position
     rating: int = Field(ge=1, le=5)
 
@@ -53,19 +53,23 @@ class PaymentUpdate(BaseModel):
 
 
 class MVPVoteIn(BaseModel):
-    voter_phone: str
-    vote_for_player_id: str
+    voter_phone: str = Field(min_length=3, max_length=32)
+    vote_for_player_id: str = Field(min_length=1, max_length=64)
 
 
 class BulkPlayer(BaseModel):
-    name: str
-    phone: str
+    name: str = Field(min_length=1, max_length=60)
+    phone: str = Field(min_length=3, max_length=32)
     position: Position
     rating: int = Field(ge=1, le=5)
 
 
 class BulkAddIn(BaseModel):
     players: List[BulkPlayer]
+
+
+class MVPVerifyIn(BaseModel):
+    phone: str = Field(min_length=3, max_length=32)
 
 
 # ---------- HELPERS ----------
@@ -204,9 +208,10 @@ async def get_match(match_id: str):
     match = await get_match_or_404(match_id)
     match.pop("admin_token", None)
     players = await get_players(match_id)
-    # public player view: hide payment status
+    # Public view: strip phone (PII) and paid status. Keep only what the join page needs.
+    PUBLIC_FIELDS = {"id", "name", "position", "team_number", "rating"}
     public_players = [
-        {k: v for k, v in p.items() if k not in ("paid",)} for p in players
+        {k: v for k, v in p.items() if k in PUBLIC_FIELDS} for p in players
     ]
     share = player_share(match, len(players)) if players else round(match["total_cost"] / match["max_players"], 2)
     return {
@@ -387,6 +392,24 @@ def is_voting_closed(match: dict) -> bool:
     return datetime.now(timezone.utc) - opened_dt > timedelta(hours=24)
 
 
+@api_router.post("/matches/{match_id}/mvp/verify")
+async def verify_voter(match_id: str, body: MVPVerifyIn):
+    """Look up the voter by phone and return only their own player record.
+    Prevents leaking all players' phones via the public list."""
+    await get_match_or_404(match_id)
+    voter = await db.players.find_one(
+        {"match_id": match_id, "phone": body.phone.strip()}, {"_id": 0}
+    )
+    if not voter:
+        raise HTTPException(404, "You did not join this match")
+    return {
+        "id": voter["id"],
+        "name": voter["name"],
+        "team_number": voter.get("team_number"),
+        "position": voter["position"],
+    }
+
+
 @api_router.post("/matches/{match_id}/mvp/vote")
 async def cast_mvp_vote(match_id: str, body: MVPVoteIn):
     match = await get_match_or_404(match_id)
@@ -503,9 +526,9 @@ app.include_router(api_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

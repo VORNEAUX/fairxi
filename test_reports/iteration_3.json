@@ -1,0 +1,35 @@
+{
+  "summary": "Iteration 3 (security fixes) — all 21 backend tests PASS + frontend MVP verify flow validated end-to-end on a freshly-created match. SEC-001 PII scrub confirmed on public GET; admin GET still exposes phone/paid. New /mvp/verify endpoint returns voter-only record (no phone in response) on valid phone and 404 on unknown. SEC-004 zip file removed from /app/frontend/public/ and no application/zip content served. Pydantic length caps enforce 422 on oversized name, empty location, rating=6, oversized join name. CORS preflight OK and allow-credentials no longer true. Regression pass: bulk-add, create/join, generate-teams, payment toggle, mark-played, open-mvp, vote, history, /demo, /my-matches, manifest.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_security_iter3.py",
+    "/app/backend/tests/test_bulk_add_and_regression.py",
+    "/app/test_reports/pytest/iter3_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "MVPVoting.jsx verify() calls new /mvp/verify endpoint correctly and sets voter with phone captured from local input (voter response no longer contains phone — good). Voter phone is retained in client memory only for the subsequent vote POST.",
+    "cast_mvp_vote uses body.voter_phone without .strip() while verify_voter does .strip() — minor consistency nit but not user-facing since UI already trims.",
+    "Demo seed's mvp_opened_at is set to server startup time; after 24h uptime the demo /vote page shows 'Closed (24h elapsed)'. Not a security concern but note that demo verify flow can only be exercised on freshly-seeded state (tested via freshly-created match instead).",
+    "get_match public endpoint whitelists PUBLIC_FIELDS = {id,name,position,team_number,rating} — clean and correct approach (won't regress if new PII fields are ever added).",
+    "/api/matches/{id}/mvp/verify does not require the match to be in mvp_voting_open state. Not a security issue (phone->player lookup) but frontend only shows verify form when votingOpen anyway — consider adding server-side status check for defense-in-depth."
+  ],
+  "updated_files": ["/app/backend/tests/test_security_iter3.py"],
+  "success_rate": {"backend": "100% (21/21)", "frontend": "100%"},
+  "seed_data_creation": "One TEST_uivote match with 6 TEST_ players created via API to exercise the /vote UI end-to-end.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Security iteration confirmed. If future changes touch player projections, extend test_public_match_no_phone_or_paid to check all new fields. Frontend vote-flow test creates its own match because demo mvp_opened_at ages past 24h. Test files: test_security_iter3.py (security + regression), test_bulk_add_and_regression.py (bulk-add + broader regression).",
+  "verified_features": [
+    "SEC-001: GET /api/matches/{id} public players[] contains only {id,name,position,team_number,rating} — no phone, no paid",
+    "SEC-001 regression: GET /api/matches/{id}/admin/{token} still exposes phone + paid",
+    "New POST /api/matches/{id}/mvp/verify: valid phone returns {id,name,team_number,position} (no phone), unknown phone → 404, unknown match → 404",
+    "SEC-004: fairxi-source.zip removed from /app/frontend/public/; /fairxi-source.zip URL does not serve application/zip or PK magic bytes",
+    "Input validation: name>80 → 422, location='' → 422, join rating=6 → 422, join name>60 → 422",
+    "CORS: OPTIONS preflight 200/204; access-control-allow-credentials not 'true'; regular GET /api/demo works",
+    "MVP Voting UI (/vote/:matchId): verify form → bad phone stays on form with toast → good phone shows teammate picker filtered to own team → vote succeeds and voted-message renders",
+    "Team isolation verified: teammate picker never shows other-team players",
+    "Regression: create/join/bulk-add/generate-teams/reassign/payment/mark-played/open-mvp/vote/history/demo/manifest.json all PASS"
+  ]
+}
