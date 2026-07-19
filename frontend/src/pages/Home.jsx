@@ -116,7 +116,7 @@ export default function Home() {
               <Link
                 to={`/m/${demo.id}`}
                 data-testid="demo-open-btn"
-                className="tap inline-flex items-center gap-2 border border-[#CCFF00] text-[#CCFF00] font-bold uppercase tracking-widest text-xs px-5 py-3 rounded-full hover:bg-[#CCFF00] hover:text-black transition-colors"
+                className="tap inline-flex items-center gap-2 border border-[#CCFF00] text-[#CCFF00] font-bold uppercase tracking-widest text-xs px-5 h-11 rounded-full hover:bg-[#CCFF00] hover:text-black transition-colors"
               >
                 Open Match Page <ArrowRight size={14} />
               </Link>
