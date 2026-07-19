@@ -62,19 +62,19 @@ export default function JoinPage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-5 py-10">
+    <main className="max-w-4xl mx-auto px-5 sm:px-6 py-8 sm:py-10">
       <SectionLabel testId="join-label">/ Match</SectionLabel>
-      <h1 className="font-display text-5xl sm:text-6xl uppercase leading-none" data-testid="match-name">
+      <h1 className="font-display text-[3rem] sm:text-6xl uppercase leading-[0.95] break-words" data-testid="match-name">
         {match.name}
       </h1>
-      <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-white/60 text-sm">
+      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-white/60 text-sm">
         <span data-testid="match-datetime">{fmtDate(match.date_time)}</span>
         <span data-testid="match-location">{match.location}</span>
         <span data-testid="match-cost">Cost: ${match.total_cost}</span>
         <span data-testid="match-share">Your share: ${share_per_player}</span>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 mt-10">
+      <div className="grid md:grid-cols-2 gap-6 sm:gap-8 mt-8 sm:mt-10">
         <div>
           <SectionLabel testId="squad-label">/ The Squad · {players.length}/{match.max_players}</SectionLabel>
           {teamsShown ? (
@@ -179,7 +179,7 @@ export default function JoinPage() {
                 type="submit"
                 disabled={submitting}
                 data-testid="submit-join"
-                className="w-full bg-[#CCFF00] text-black font-bold uppercase tracking-[0.2em] px-6 py-4 rounded-full hover:scale-[1.02] transition-transform disabled:opacity-50"
+                className="tap w-full bg-[#CCFF00] text-black font-bold uppercase tracking-[0.2em] px-6 py-4 rounded-full hover:scale-[1.02] transition-transform disabled:opacity-50"
               >
                 {submitting ? "Joining..." : "Confirm Join →"}
               </button>

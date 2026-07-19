@@ -22,16 +22,16 @@ export default function MatchCreated() {
   };
 
   const Row = ({ label, href, testId, primary }) => (
-    <div className="glass rounded-xl p-5" data-testid={testId}>
+    <div className="glass rounded-xl p-5 sm:p-6" data-testid={testId}>
       <div className="text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2">{label}</div>
       <div className="flex items-center gap-3 mb-3">
-        <code className={`text-sm break-all ${primary ? "text-[#CCFF00]" : "text-white/80"}`}>{href}</code>
+        <code className={`text-xs sm:text-sm break-all ${primary ? "text-[#CCFF00]" : "text-white/80"}`}>{href}</code>
       </div>
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => copy(href, label)}
           data-testid={`${testId}-copy`}
-          className="inline-flex items-center gap-2 border border-white/20 hover:border-[#CCFF00] hover:text-[#CCFF00] text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-colors"
+          className="tap inline-flex items-center gap-2 border border-white/20 hover:border-[#CCFF00] hover:text-[#CCFF00] text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-colors"
         >
           <Copy size={12} /> Copy
         </button>
@@ -40,7 +40,7 @@ export default function MatchCreated() {
           target="_blank"
           rel="noreferrer"
           data-testid={`${testId}-open`}
-          className="inline-flex items-center gap-2 border border-white/20 hover:border-[#CCFF00] hover:text-[#CCFF00] text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-colors"
+          className="tap inline-flex items-center gap-2 border border-white/20 hover:border-[#CCFF00] hover:text-[#CCFF00] text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-colors"
         >
           <ExternalLink size={12} /> Open
         </a>
@@ -49,19 +49,19 @@ export default function MatchCreated() {
   );
 
   return (
-    <main className="max-w-2xl mx-auto px-5 py-12">
+    <main className="max-w-2xl mx-auto px-5 sm:px-6 py-10 sm:py-12">
       <SectionLabel testId="created-label">/ Match created</SectionLabel>
-      <h1 className="font-display text-5xl sm:text-6xl uppercase leading-none mb-2">
+      <h1 className="font-display text-[3rem] sm:text-6xl uppercase leading-[0.95] mb-2">
         You're on. <span className="text-[#CCFF00]">Share the link.</span>
       </h1>
-      <p className="text-white/60 mb-8">Save the admin link — only you should have it.</p>
+      <p className="text-white/60 mb-7 sm:mb-8 text-sm sm:text-base">Save the admin link — only you should have it.</p>
 
       <div className="space-y-4">
         <Row label="Public Join Link (share with players)" href={publicLink} testId="public-link" primary />
         <button
           onClick={whatsapp}
           data-testid="share-whatsapp"
-          className="w-full bg-[#25D366] text-black font-bold uppercase tracking-[0.2em] px-6 py-4 rounded-full hover:scale-[1.02] transition-transform"
+          className="tap w-full bg-[#25D366] text-black font-bold uppercase tracking-[0.2em] px-6 py-4 rounded-full hover:scale-[1.02] transition-transform"
         >
           Share on WhatsApp
         </button>
@@ -69,11 +69,11 @@ export default function MatchCreated() {
         <Row label="MVP Voting Link (share after match)" href={voteLink} testId="vote-link" />
       </div>
 
-      <div className="mt-10 flex gap-3">
+      <div className="mt-8 sm:mt-10 flex gap-3">
         <Link
           to={`/admin/${matchId}/${adminToken}`}
           data-testid="go-admin"
-          className="inline-flex items-center gap-2 bg-[#CCFF00] text-black font-bold uppercase tracking-[0.2em] px-6 py-4 rounded-full"
+          className="tap w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#CCFF00] text-black font-bold uppercase tracking-[0.2em] px-6 py-4 rounded-full"
         >
           Go to Admin →
         </Link>

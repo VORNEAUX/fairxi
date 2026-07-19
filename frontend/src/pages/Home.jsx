@@ -74,28 +74,28 @@ export default function Home() {
       <section className="relative overflow-hidden stadium-hero pitch-grain">
         <PitchCircle className="w-[520px] h-[520px] -top-40 -right-40 spin-slow" />
         <PitchCircle className="w-[260px] h-[260px] bottom-10 -left-20 spin-slow" />
-        <div className="max-w-6xl mx-auto px-5 pt-16 pb-24 relative">
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 pt-14 pb-20 sm:pt-16 sm:pb-24 relative">
           <SectionLabel testId="hero-tagline">/ For casual football groups</SectionLabel>
-          <h1 className="font-display text-6xl sm:text-7xl md:text-8xl leading-[0.9] uppercase max-w-3xl">
+          <h1 className="font-display text-[3.25rem] leading-[0.92] sm:text-7xl md:text-8xl uppercase max-w-3xl">
             Balanced teams.<br />
             <span className="text-[#CCFF00]">Split the pitch.</span><br />
             Zero drama.
           </h1>
-          <p className="mt-6 max-w-xl text-white/70 text-base sm:text-lg font-body">
+          <p className="mt-5 sm:mt-6 max-w-xl text-white/70 text-base sm:text-lg font-body">
             Create a match link, let mates join, then auto-generate fair teams and split the pitch cost. Vote for the MVP after the whistle.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-7 sm:mt-8 flex flex-wrap gap-3">
             <button
               onClick={() => nav("/create")}
               data-testid="hero-create-btn"
-              className="inline-flex items-center gap-2 bg-[#CCFF00] text-black font-bold uppercase tracking-widest text-sm px-6 py-4 rounded-full hover:scale-[1.03] transition-transform accent-glow"
+              className="tap inline-flex items-center gap-2 bg-[#CCFF00] text-black font-bold uppercase tracking-widest text-sm px-6 py-4 rounded-full hover:scale-[1.03] transition-transform accent-glow"
             >
               Create a Match <ArrowRight size={16} />
             </button>
             <Link
               to="/history"
               data-testid="hero-history-btn"
-              className="inline-flex items-center gap-2 border border-white/25 text-white font-bold uppercase tracking-widest text-sm px-6 py-4 rounded-full hover:border-[#CCFF00] hover:text-[#CCFF00] transition-colors"
+              className="tap inline-flex items-center gap-2 border border-white/25 text-white font-bold uppercase tracking-widest text-sm px-6 py-4 rounded-full hover:border-[#CCFF00] hover:text-[#CCFF00] transition-colors"
             >
               Check Your Stats
             </Link>
@@ -104,19 +104,19 @@ export default function Home() {
       </section>
 
       {/* LIVE DEMO */}
-      <section className="relative py-16 pitch-lines">
-        <div className="max-w-6xl mx-auto px-5">
-          <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+      <section className="relative py-12 sm:py-16 pitch-lines">
+        <div className="max-w-6xl mx-auto px-5 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4 mb-6 sm:mb-8">
             <div>
               <SectionLabel testId="demo-label">/ Live Demo</SectionLabel>
               <h2 className="font-display text-4xl sm:text-5xl uppercase">See it in action</h2>
-              <p className="text-white/60 max-w-md mt-2">A real match already built. Click through — no signup, no forms.</p>
+              <p className="text-white/60 max-w-md mt-2 text-sm sm:text-base">A real match already built. Click through — no signup, no forms.</p>
             </div>
             {demo && (
               <Link
                 to={`/m/${demo.id}`}
                 data-testid="demo-open-btn"
-                className="inline-flex items-center gap-2 border border-[#CCFF00] text-[#CCFF00] font-bold uppercase tracking-widest text-xs px-5 py-3 rounded-full hover:bg-[#CCFF00] hover:text-black transition-colors"
+                className="tap inline-flex items-center gap-2 border border-[#CCFF00] text-[#CCFF00] font-bold uppercase tracking-widest text-xs px-5 py-3 rounded-full hover:bg-[#CCFF00] hover:text-black transition-colors"
               >
                 Open Match Page <ArrowRight size={14} />
               </Link>
@@ -124,22 +124,22 @@ export default function Home() {
           </div>
 
           {demo && (
-            <div className="grid md:grid-cols-3 gap-5" data-testid="demo-container">
-              <div className="glass rounded-xl p-6 md:col-span-1">
+            <div className="grid md:grid-cols-3 gap-4 sm:gap-5" data-testid="demo-container">
+              <div className="glass rounded-xl p-5 sm:p-6 md:col-span-1">
                 <div className="text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2">{fmtDate(demo.match.date_time)}</div>
-                <h3 className="font-display text-3xl uppercase">{demo.match.name}</h3>
+                <h3 className="font-display text-3xl uppercase leading-tight">{demo.match.name}</h3>
                 <div className="text-white/60 text-sm mt-1">{demo.match.location}</div>
-                <div className="grid grid-cols-3 gap-2 mt-6">
+                <div className="grid grid-cols-3 gap-2 mt-5 sm:mt-6">
                   <StatPill label="Players" value={demo.players.length} testId="stat-players" />
                   <StatPill label="Cost" value={`$${demo.match.total_cost}`} testId="stat-cost" />
                   <StatPill label="Each" value={`$${demo.share_per_player}`} testId="stat-share" />
                 </div>
                 {mvp?.mvp && (
-                  <div className="mt-6 border-t border-white/10 pt-5">
+                  <div className="mt-5 sm:mt-6 border-t border-white/10 pt-5">
                     <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40">
                       <Trophy size={12} className="text-[#CCFF00]" /> Match MVP
                     </div>
-                    <div className="font-display text-4xl mt-2 text-[#CCFF00]">{mvp.mvp.name}</div>
+                    <div className="font-display text-4xl mt-2 text-[#CCFF00] leading-none">{mvp.mvp.name}</div>
                     <div className="text-white/50 text-xs uppercase tracking-widest mt-1">{mvp.mvp.votes} votes · Team {mvp.mvp.team_number}</div>
                   </div>
                 )}
@@ -157,19 +157,19 @@ export default function Home() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="py-16 relative overflow-hidden">
+      <section className="py-12 sm:py-16 relative overflow-hidden">
         <PitchCircle className="w-[400px] h-[400px] -bottom-40 left-1/2 -translate-x-1/2 spin-slow" />
-        <div className="max-w-6xl mx-auto px-5">
+        <div className="max-w-6xl mx-auto px-5 sm:px-6">
           <SectionLabel testId="how-label">/ Three steps</SectionLabel>
-          <h2 className="font-display text-4xl sm:text-5xl uppercase mb-10">How it works</h2>
-          <div className="grid sm:grid-cols-3 gap-5">
+          <h2 className="font-display text-4xl sm:text-5xl uppercase mb-8 sm:mb-10">How it works</h2>
+          <div className="grid sm:grid-cols-3 gap-4 sm:gap-5">
             {[
               { n: "01", t: "Create the match", d: "Set date, pitch, cost, and how many teams. Get a share link." },
               { n: "02", t: "Mates join", d: "Everyone drops their name, position and self-rating (1–5)." },
               { n: "03", t: "Snake-draft teams", d: "One tap generates balanced sides. Nudge with dropdowns if needed." },
             ].map((s) => (
-              <div key={s.n} className="glass rounded-xl p-6" data-testid={`step-${s.n}`}>
-                <div className="font-display text-5xl text-[#CCFF00]">{s.n}</div>
+              <div key={s.n} className="glass rounded-xl p-5 sm:p-6" data-testid={`step-${s.n}`}>
+                <div className="font-display text-5xl text-[#CCFF00] leading-none">{s.n}</div>
                 <div className="font-display text-2xl uppercase mt-2">{s.t}</div>
                 <p className="text-white/60 mt-2 text-sm">{s.d}</p>
               </div>
@@ -178,10 +178,10 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-white/10 py-8">
-        <div className="max-w-6xl mx-auto px-5 flex items-center justify-between text-white/40 text-xs uppercase tracking-widest">
+      <footer className="border-t border-white/10 py-8 sm:py-10">
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-white/40 text-[10px] sm:text-xs uppercase tracking-widest">
           <Logo />
-          <span>Built for the beautiful weeknight game</span>
+          <span className="max-w-[16rem] sm:max-w-none leading-relaxed">Built for the beautiful weeknight game</span>
         </div>
       </footer>
     </main>

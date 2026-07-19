@@ -89,3 +89,30 @@ html, body {
     background-color: #CCFF00 !important;
     border-color: #CCFF00 !important;
 }
+
+/* --- Mobile polish utilities --- */
+/* Consistent tap feedback across all interactive elements */
+.tap {
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+    touch-action: manipulation;
+}
+.tap:active {
+    transform: scale(0.97);
+}
+.tap-lg:active {
+    transform: scale(0.98);
+}
+
+/* Ensure sane min touch target on interactive elements */
+@media (max-width: 640px) {
+    button, a[role="button"], .touch-44 {
+        min-height: 44px;
+    }
+}
+
+/* Prevent iOS bounce highlight on links */
+a { -webkit-tap-highlight-color: transparent; }
+
+/* Prevent iOS font-size auto-adjust for headings */
+html { -webkit-text-size-adjust: 100%; }

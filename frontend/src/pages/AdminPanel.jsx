@@ -126,18 +126,18 @@ export default function AdminPanel() {
   const votingClosedOrDone = match.status === "completed" || match.status === "mvp_voting_open";
 
   return (
-    <main className="max-w-6xl mx-auto px-5 py-10">
+    <main className="max-w-6xl mx-auto px-5 sm:px-6 py-8 sm:py-10">
       <SectionLabel testId="admin-label">/ Admin control</SectionLabel>
-      <h1 className="font-display text-5xl sm:text-6xl uppercase leading-none" data-testid="admin-match-name">{match.name}</h1>
-      <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-white/60 text-sm">
+      <h1 className="font-display text-[3rem] sm:text-6xl uppercase leading-[0.95] break-words" data-testid="admin-match-name">{match.name}</h1>
+      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-white/60 text-sm">
         <span>{fmtDate(match.date_time)}</span>
         <span>{match.location}</span>
         <span>Status: <span className="text-[#CCFF00] uppercase" data-testid="match-status">{match.status.replace("_", " ")}</span></span>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6 mt-10">
+      <div className="grid md:grid-cols-3 gap-5 sm:gap-6 mt-8 sm:mt-10">
         {/* PLAYERS */}
-        <div className="md:col-span-2 glass rounded-xl p-6">
+        <div className="md:col-span-2 glass rounded-xl p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <SectionLabel testId="players-label">/ Roster · {players.length}/{match.max_players}</SectionLabel>
             <div className="flex flex-wrap gap-2">
@@ -233,7 +233,7 @@ export default function AdminPanel() {
         {/* SIDE */}
         <div className="space-y-6">
           {/* Payments */}
-          <div className="glass rounded-xl p-6" data-testid="payments-panel">
+          <div className="glass rounded-xl p-5 sm:p-6" data-testid="payments-panel">
             <SectionLabel>/ Payments · ${share_per_player}/each</SectionLabel>
             <div className="text-white/50 text-xs uppercase tracking-widest mb-3">{paidCount}/{players.length} paid</div>
             <ul className="divide-y divide-white/5">
@@ -256,7 +256,7 @@ export default function AdminPanel() {
           </div>
 
           {/* Actions */}
-          <div className="glass rounded-xl p-6" data-testid="actions-panel">
+          <div className="glass rounded-xl p-5 sm:p-6" data-testid="actions-panel">
             <SectionLabel>/ Match flow</SectionLabel>
             <button
               onClick={markPlayed}
@@ -283,7 +283,7 @@ export default function AdminPanel() {
 
           {/* Recap */}
           {teamsExist && votingClosedOrDone && (
-            <div className="glass rounded-xl p-6" data-testid="recap-panel">
+            <div className="glass rounded-xl p-5 sm:p-6" data-testid="recap-panel">
               <SectionLabel>/ Recap card</SectionLabel>
               <p className="text-white/50 text-xs mb-3">Save or share a visual summary of this match.</p>
               <button

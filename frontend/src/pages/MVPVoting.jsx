@@ -79,12 +79,12 @@ export default function MVPVoting() {
   const maxVotes = Math.max(1, ...(results?.results || []).map((r) => r.votes));
 
   return (
-    <main className="max-w-4xl mx-auto px-5 py-10">
+    <main className="max-w-4xl mx-auto px-5 sm:px-6 py-8 sm:py-10">
       <SectionLabel testId="vote-label">/ MVP Vote</SectionLabel>
-      <h1 className="font-display text-5xl sm:text-6xl uppercase leading-none">
+      <h1 className="font-display text-[3rem] sm:text-6xl uppercase leading-[0.95]">
         Who ran <span className="text-[#CCFF00]">the show?</span>
       </h1>
-      <p className="text-white/60 mt-3">Vote for one teammate. One vote per player. Auto-closes 24h after opening.</p>
+      <p className="text-white/60 mt-3 text-sm sm:text-base">Vote for one teammate. One vote per player. Auto-closes 24h after opening.</p>
 
       {!votingOpen && (
         <div className="glass rounded-xl p-5 mt-6 border border-[#CCFF00]/30" data-testid="voting-status">
@@ -95,7 +95,7 @@ export default function MVPVoting() {
         </div>
       )}
 
-      <div className="grid md:grid-cols-2 gap-8 mt-10">
+      <div className="grid md:grid-cols-2 gap-6 sm:gap-8 mt-8 sm:mt-10">
         {/* LEFT: Vote form */}
         <div>
           {votingOpen && !voter && (
@@ -111,7 +111,7 @@ export default function MVPVoting() {
               <button
                 type="submit"
                 data-testid="verify-btn"
-                className="mt-6 w-full bg-[#CCFF00] text-black font-bold uppercase tracking-[0.2em] px-6 py-4 rounded-full hover:scale-[1.02] transition-transform"
+                className="tap mt-6 w-full bg-[#CCFF00] text-black font-bold uppercase tracking-[0.2em] px-6 py-4 rounded-full hover:scale-[1.02] transition-transform"
               >
                 Continue →
               </button>
@@ -127,7 +127,7 @@ export default function MVPVoting() {
                     <button
                       onClick={() => castVote(t.id)}
                       data-testid={`vote-${t.id}`}
-                      className="w-full flex items-center justify-between px-4 py-4 border border-white/15 rounded-lg hover:border-[#CCFF00] hover:text-[#CCFF00] transition-colors"
+                      className="tap w-full flex items-center justify-between px-4 py-4 border border-white/15 rounded-lg hover:border-[#CCFF00] hover:text-[#CCFF00] transition-colors"
                     >
                       <span>{t.name}</span>
                       <span className="text-[10px] uppercase tracking-widest text-white/40">{t.position}</span>

@@ -92,12 +92,12 @@ export default function CreateMatch() {
   };
 
   return (
-    <main className="relative max-w-2xl mx-auto px-5 py-12">
+    <main className="relative max-w-2xl mx-auto px-5 sm:px-6 py-10 sm:py-12">
       <SectionLabel testId="create-label">/ New Match</SectionLabel>
-      <h1 className="font-display text-5xl sm:text-6xl uppercase leading-none">
+      <h1 className="font-display text-[3rem] sm:text-6xl uppercase leading-none">
         Set the <span className="text-[#CCFF00]">fixture.</span>
       </h1>
-      <p className="text-white/60 mt-3 mb-10">Only takes a minute. You'll get a share link at the end.</p>
+      <p className="text-white/60 mt-3 mb-8 sm:mb-10 text-sm sm:text-base">Only takes a minute. You'll get a share link at the end.</p>
 
       <form onSubmit={submit} data-testid="create-match-form">
         <Field label="Match name (optional)" testId="field-name">
@@ -140,13 +140,13 @@ export default function CreateMatch() {
 
         {/* Saved Squad */}
         <div className="mb-6 glass rounded-xl p-5">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
             <SectionLabel>/ Saved squad ({savedCount})</SectionLabel>
             <button
               type="button"
               onClick={loadSquad}
               data-testid="load-squad-btn"
-              className="inline-flex items-center gap-2 border border-white/20 hover:border-[#CCFF00] hover:text-[#CCFF00] text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-colors"
+              className="tap self-start sm:self-auto inline-flex items-center gap-2 border border-white/20 hover:border-[#CCFF00] hover:text-[#CCFF00] text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-colors whitespace-nowrap"
             >
               <Users size={12} /> Load Saved Squad
             </button>
@@ -174,7 +174,7 @@ export default function CreateMatch() {
           type="submit"
           disabled={loading}
           data-testid="submit-create"
-          className="mt-2 w-full bg-[#CCFF00] text-black font-bold uppercase tracking-[0.2em] px-6 py-5 rounded-full hover:scale-[1.02] transition-transform disabled:opacity-50 accent-glow"
+          className="tap mt-2 w-full bg-[#CCFF00] text-black font-bold uppercase tracking-[0.2em] px-6 py-5 rounded-full hover:scale-[1.02] transition-transform disabled:opacity-50 accent-glow"
         >
           {loading ? "Creating..." : "Create Match →"}
         </button>
