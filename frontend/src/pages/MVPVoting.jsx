@@ -3,7 +3,8 @@ import { useParams } from "react-router-dom";
 import { api, teamColors } from "@/lib/api";
 import { SectionLabel } from "@/components/Motifs";
 import { toast } from "sonner";
-import { Trophy } from "lucide-react";
+import { Trophy, Download } from "lucide-react";
+import { downloadRecap, shareRecap } from "@/lib/recap";
 
 export default function MVPVoting() {
   const { matchId } = useParams();
@@ -138,7 +139,12 @@ export default function MVPVoting() {
           )}
 
           {voted && (
-            <div className="glass rounded-xl p-6" data-testid="voted-message">
+            <div className="glass rounded-xl p-6 text-center" data-testid="voted-message">
+              <div className="checkmark-pop inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#CCFF00] text-black mb-3">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 12l5 5L20 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
               <div className="font-display text-3xl text-[#CCFF00]">Vote in.</div>
               <p className="text-white/60 mt-2">Results update in real time on the right.</p>
             </div>
@@ -155,6 +161,32 @@ export default function MVPVoting() {
               </div>
               <div className="font-display text-4xl mt-1 text-[#CCFF00]">{results.mvp.name}</div>
               <div className="text-white/50 text-xs uppercase tracking-widest">{results.mvp.votes} votes · Team {results.mvp.team_number}</div>
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await shareRecap({ match, players, mvp: results.mvp });
+                      toast.success(res === "shared" ? "Shared!" : "Recap saved");
+                    } catch { toast.error("Failed"); }
+                  }}
+                  data-testid="share-recap-mvp"
+                  className="flex-1 bg-[#CCFF00] text-black text-[10px] font-bold uppercase tracking-widest py-2 rounded-full hover:scale-[1.02] transition-transform"
+                >
+                  Share Recap
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await downloadRecap({ match, players, mvp: results.mvp });
+                      toast.success("Downloaded");
+                    } catch { toast.error("Failed"); }
+                  }}
+                  data-testid="download-recap-mvp"
+                  className="inline-flex items-center gap-1 border border-white/20 hover:border-[#CCFF00] hover:text-[#CCFF00] text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-full transition-colors"
+                >
+                  <Download size={10} /> PNG
+                </button>
+              </div>
             </div>
           )}
           <ul className="space-y-2" data-testid="results-list">

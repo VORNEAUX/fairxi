@@ -5,12 +5,15 @@ import { SectionLabel } from "@/components/Motifs";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2 } from "lucide-react";
+import { Trash2, Save, Users, Download } from "lucide-react";
+import { getSavedSquad, saveSquad } from "@/lib/storage";
+import { downloadRecap, shareRecap } from "@/lib/recap";
 
 export default function AdminPanel() {
   const { matchId, adminToken } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [justGenerated, setJustGenerated] = useState(false);
 
   const load = async () => {
     try {
@@ -41,6 +44,8 @@ export default function AdminPanel() {
   const generate = async () => {
     try {
       await api.post(`/matches/${matchId}/admin/${adminToken}/generate-teams`);
+      setJustGenerated(true);
+      setTimeout(() => setJustGenerated(false), 2000);
       toast.success("Teams generated");
       load();
     } catch (e) { toast.error(e.response?.data?.detail || "Failed"); }
@@ -56,6 +61,7 @@ export default function AdminPanel() {
   const setPaid = async (pid, paid) => {
     try {
       await api.patch(`/matches/${matchId}/admin/${adminToken}/players/${pid}/payment`, { paid });
+      if (paid) toast.success("Marked as paid ✓");
       load();
     } catch (e) { toast.error("Failed"); }
   };
@@ -76,6 +82,39 @@ export default function AdminPanel() {
     } catch (e) { toast.error(e.response?.data?.detail || "Failed"); }
   };
 
+  const doSaveSquad = () => {
+    if (players.length === 0) return toast.error("Nothing to save yet");
+    saveSquad(players);
+    toast.success(`Saved squad (${players.length} players) for next time`);
+  };
+
+  const loadSavedSquad = async () => {
+    const squad = getSavedSquad();
+    if (squad.length === 0) return toast.error("No saved squad yet");
+    try {
+      const r = await api.post(`/matches/${matchId}/admin/${adminToken}/bulk-add`, { players: squad });
+      toast.success(`Added ${r.data.added} players${r.data.skipped ? `, skipped ${r.data.skipped}` : ""}`);
+      load();
+    } catch (e) { toast.error(e.response?.data?.detail || "Failed"); }
+  };
+
+  const doDownloadRecap = async () => {
+    try {
+      const r = await api.get(`/matches/${matchId}/mvp/results`);
+      await downloadRecap({ match, players, mvp: r.data.mvp });
+      toast.success("Recap downloaded");
+    } catch (e) { toast.error("Could not generate recap"); }
+  };
+
+  const doShareRecap = async () => {
+    try {
+      const r = await api.get(`/matches/${matchId}/mvp/results`);
+      const result = await shareRecap({ match, players, mvp: r.data.mvp });
+      if (result === "shared") toast.success("Shared!");
+      else toast.success("Recap saved to your device");
+    } catch (e) { toast.error("Could not share recap"); }
+  };
+
   const grouped = {};
   for (const p of players) {
     const t = p.team_number || 0;
@@ -84,6 +123,7 @@ export default function AdminPanel() {
   }
   const teamsExist = players.some((p) => p.team_number);
   const paidCount = players.filter((p) => p.paid).length;
+  const votingClosedOrDone = match.status === "completed" || match.status === "mvp_voting_open";
 
   return (
     <main className="max-w-6xl mx-auto px-5 py-10">
@@ -98,22 +138,42 @@ export default function AdminPanel() {
       <div className="grid md:grid-cols-3 gap-6 mt-10">
         {/* PLAYERS */}
         <div className="md:col-span-2 glass rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <SectionLabel testId="players-label">/ Roster · {players.length}/{match.max_players}</SectionLabel>
-            <button
-              onClick={generate}
-              disabled={players.length < 4}
-              data-testid="generate-teams-btn"
-              className="text-xs font-bold uppercase tracking-widest border border-[#CCFF00] text-[#CCFF00] hover:bg-[#CCFF00] hover:text-black transition-colors px-4 py-2 rounded-full disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {teamsExist ? "Regenerate Teams" : "Generate Teams"}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={loadSavedSquad}
+                data-testid="admin-load-squad"
+                className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest border border-white/20 hover:border-[#CCFF00] hover:text-[#CCFF00] transition-colors px-3 py-2 rounded-full"
+              >
+                <Users size={12} /> Load Squad
+              </button>
+              <button
+                onClick={doSaveSquad}
+                data-testid="admin-save-squad"
+                className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest border border-white/20 hover:border-[#CCFF00] hover:text-[#CCFF00] transition-colors px-3 py-2 rounded-full"
+              >
+                <Save size={12} /> Save Squad
+              </button>
+              <button
+                onClick={generate}
+                disabled={players.length < 4}
+                data-testid="generate-teams-btn"
+                className="text-xs font-bold uppercase tracking-widest border border-[#CCFF00] text-[#CCFF00] hover:bg-[#CCFF00] hover:text-black transition-colors px-4 py-2 rounded-full disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {teamsExist ? "Regenerate" : "Generate Teams"}
+              </button>
+            </div>
           </div>
 
           {!teamsExist ? (
             <ul className="divide-y divide-white/5" data-testid="admin-players-list">
-              {players.map((p) => (
-                <li key={p.id} className="flex items-center justify-between py-3">
+              {players.map((p, i) => (
+                <li
+                  key={p.id}
+                  className="flex items-center justify-between py-3 stagger-in"
+                  style={{ animationDelay: `${i * 40}ms` }}
+                >
                   <div>
                     <div className="text-white/90">{p.name}</div>
                     <div className="text-[10px] uppercase tracking-widest text-white/40">{p.position} · Rating {p.rating}</div>
@@ -131,15 +191,19 @@ export default function AdminPanel() {
             </ul>
           ) : (
             <div className="space-y-5" data-testid="admin-teams-container">
-              {Object.keys(grouped).sort().map((t) => (
+              {Object.keys(grouped).sort().map((t, tIdx) => (
                 <div key={t}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`inline-flex w-6 h-6 items-center justify-center rounded-full font-display text-sm ${teamColors[t - 1].chip}`}>{t}</span>
                     <span className="font-display text-xl uppercase tracking-widest">Team {t}</span>
                   </div>
                   <ul className="divide-y divide-white/5">
-                    {grouped[t].map((p) => (
-                      <li key={p.id} className="flex items-center justify-between py-2.5 gap-3">
+                    {grouped[t].map((p, i) => (
+                      <li
+                        key={p.id}
+                        className={`flex items-center justify-between py-2.5 gap-3 ${justGenerated ? "stagger-in" : ""}`}
+                        style={justGenerated ? { animationDelay: `${(tIdx * 80) + i * 90}ms` } : {}}
+                      >
                         <div className="min-w-0">
                           <div className="text-white/90 truncate">{p.name}</div>
                           <div className="text-[10px] uppercase tracking-widest text-white/40">{p.position} · R{p.rating}</div>
@@ -181,7 +245,7 @@ export default function AdminPanel() {
                       checked={p.paid}
                       onCheckedChange={(v) => setPaid(p.id, !!v)}
                       data-testid={`pay-${p.id}`}
-                      className="border-white/30 data-[state=checked]:bg-[#CCFF00] data-[state=checked]:text-black data-[state=checked]:border-[#CCFF00]"
+                      className={`border-white/30 data-[state=checked]:bg-[#CCFF00] data-[state=checked]:text-black data-[state=checked]:border-[#CCFF00] ${p.paid ? "pulse-accent" : ""}`}
                     />
                     <span className={`text-[10px] uppercase tracking-widest ${p.paid ? "text-[#CCFF00]" : "text-white/40"}`}>{p.paid ? "Paid" : "Unpaid"}</span>
                   </label>
@@ -216,6 +280,28 @@ export default function AdminPanel() {
               </div>
             )}
           </div>
+
+          {/* Recap */}
+          {teamsExist && votingClosedOrDone && (
+            <div className="glass rounded-xl p-6" data-testid="recap-panel">
+              <SectionLabel>/ Recap card</SectionLabel>
+              <p className="text-white/50 text-xs mb-3">Save or share a visual summary of this match.</p>
+              <button
+                onClick={doShareRecap}
+                data-testid="share-recap-btn"
+                className="w-full mb-2 bg-[#CCFF00] text-black text-xs font-bold uppercase tracking-widest py-3 rounded-full hover:scale-[1.02] transition-transform"
+              >
+                Share Recap
+              </button>
+              <button
+                onClick={doDownloadRecap}
+                data-testid="download-recap-btn"
+                className="w-full inline-flex items-center justify-center gap-2 border border-white/20 hover:border-[#CCFF00] hover:text-[#CCFF00] text-xs font-bold uppercase tracking-widest py-3 rounded-full transition-colors"
+              >
+                <Download size={12} /> Download
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </main>

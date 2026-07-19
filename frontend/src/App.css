@@ -40,3 +40,31 @@
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+.stagger-in {
+    animation: staggerIn 0.5s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@keyframes staggerIn {
+    0% { opacity: 0; transform: translateX(-16px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.checkmark-pop {
+    animation: pop 0.6s cubic-bezier(0.2, 1.4, 0.6, 1) both;
+}
+
+@keyframes pop {
+    0% { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.pulse-accent {
+    animation: pulseAccent 1.4s ease-in-out;
+}
+
+@keyframes pulseAccent {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(204,255,0,0); }
+    50% { box-shadow: 0 0 0 8px rgba(204,255,0,0.15); }
+}

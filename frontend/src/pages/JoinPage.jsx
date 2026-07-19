@@ -14,6 +14,7 @@ export default function JoinPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [joined, setJoined] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", position: "Midfielder", rating: 3 });
 
   const load = async () => {
@@ -36,6 +37,8 @@ export default function JoinPage() {
     try {
       await api.post(`/matches/${matchId}/join`, form);
       toast.success("You're in!");
+      setJoined(true);
+      setTimeout(() => setJoined(false), 2500);
       setForm({ name: "", phone: "", position: "Midfielder", rating: 3 });
       load();
     } catch (err) {
@@ -115,7 +118,18 @@ export default function JoinPage() {
               <p className="text-white/60 mt-2">Ask the organizer to add you to the waitlist. If someone drops out, you're in.</p>
             </div>
           ) : (
-            <form onSubmit={submit} className="glass rounded-xl p-6" data-testid="join-form">
+            <>
+              {joined && (
+                <div className="glass rounded-xl p-6 mb-4 text-center border border-[#CCFF00]/40" data-testid="join-success">
+                  <div className="checkmark-pop inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#CCFF00] text-black mb-2">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                      <path d="M5 12l5 5L20 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <div className="font-display text-2xl text-[#CCFF00]">You're on the sheet</div>
+                </div>
+              )}
+              <form onSubmit={submit} className="glass rounded-xl p-6" data-testid="join-form">
               <div className="mb-5">
                 <label className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#CCFF00]">Name</label>
                 <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} data-testid="join-name" />
@@ -170,6 +184,7 @@ export default function JoinPage() {
                 {submitting ? "Joining..." : "Confirm Join →"}
               </button>
             </form>
+            </>
           )}
         </div>
       </div>

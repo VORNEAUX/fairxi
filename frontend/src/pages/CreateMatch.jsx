@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { SectionLabel } from "@/components/Motifs";
 import { toast } from "sonner";
+import { getSavedSquad, addMyMatch } from "@/lib/storage";
+import { Users, Trash2 } from "lucide-react";
 
 const Field = ({ label, children, testId }) => (
   <div className="mb-6" data-testid={testId}>
@@ -27,8 +29,24 @@ export default function CreateMatch() {
     num_teams: "2",
   });
   const [loading, setLoading] = useState(false);
+  const [squad, setSquad] = useState([]);
+  const savedCount = getSavedSquad().length;
 
   const set = (k, v) => setForm({ ...form, [k]: v });
+
+  const loadSquad = () => {
+    const s = getSavedSquad();
+    if (s.length === 0) {
+      toast.error("No saved squad yet");
+      return;
+    }
+    setSquad(s);
+    toast.success(`Loaded ${s.length} players from saved squad`);
+  };
+
+  const removeFromSquad = (phone) => {
+    setSquad(squad.filter((p) => p.phone !== phone));
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -46,6 +64,24 @@ export default function CreateMatch() {
         max_players: parseInt(form.max_players),
         num_teams: parseInt(form.num_teams),
       });
+      addMyMatch({
+        match_id: res.data.id,
+        admin_token: res.data.admin_token,
+        name: form.name || `Match on ${new Date(form.date_time).toLocaleDateString()}`,
+        date_time: new Date(form.date_time).toISOString(),
+        location: form.location,
+      });
+      if (squad.length > 0) {
+        try {
+          const r = await api.post(
+            `/matches/${res.data.id}/admin/${res.data.admin_token}/bulk-add`,
+            { players: squad }
+          );
+          toast.success(`Added ${r.data.added} players from squad`);
+        } catch (err) {
+          toast.error("Could not import squad, but match was created");
+        }
+      }
       toast.success("Match created");
       nav(`/created/${res.data.id}/${res.data.admin_token}`);
     } catch (err) {
@@ -65,57 +101,23 @@ export default function CreateMatch() {
 
       <form onSubmit={submit} data-testid="create-match-form">
         <Field label="Match name (optional)" testId="field-name">
-          <input
-            className={inputCls}
-            placeholder="Friday Night 5-a-Side"
-            value={form.name}
-            onChange={(e) => set("name", e.target.value)}
-            data-testid="input-name"
-          />
+          <input className={inputCls} placeholder="Friday Night 5-a-Side" value={form.name} onChange={(e) => set("name", e.target.value)} data-testid="input-name" />
         </Field>
         <Field label="Date & time" testId="field-datetime">
-          <input
-            type="datetime-local"
-            className={inputCls}
-            value={form.date_time}
-            onChange={(e) => set("date_time", e.target.value)}
-            data-testid="input-datetime"
-          />
+          <input type="datetime-local" className={inputCls} value={form.date_time} onChange={(e) => set("date_time", e.target.value)} data-testid="input-datetime" />
         </Field>
         <Field label="Location" testId="field-location">
-          <input
-            className={inputCls}
-            placeholder="Riverside Astro Pitch"
-            value={form.location}
-            onChange={(e) => set("location", e.target.value)}
-            data-testid="input-location"
-          />
+          <input className={inputCls} placeholder="Riverside Astro Pitch" value={form.location} onChange={(e) => set("location", e.target.value)} data-testid="input-location" />
         </Field>
         <div className="grid grid-cols-2 gap-6">
           <Field label="Total pitch cost" testId="field-cost">
             <div className="flex items-center">
               <span className="text-white/40 mr-1">$</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                className={inputCls}
-                placeholder="100"
-                value={form.total_cost}
-                onChange={(e) => set("total_cost", e.target.value)}
-                data-testid="input-cost"
-              />
+              <input type="number" min="0" step="0.01" className={inputCls} placeholder="100" value={form.total_cost} onChange={(e) => set("total_cost", e.target.value)} data-testid="input-cost" />
             </div>
           </Field>
           <Field label="Max players" testId="field-max">
-            <input
-              type="number"
-              min="2"
-              className={inputCls}
-              value={form.max_players}
-              onChange={(e) => set("max_players", e.target.value)}
-              data-testid="input-max"
-            />
+            <input type="number" min="2" className={inputCls} value={form.max_players} onChange={(e) => set("max_players", e.target.value)} data-testid="input-max" />
           </Field>
         </div>
         <Field label="Number of teams" testId="field-teams">
@@ -127,9 +129,7 @@ export default function CreateMatch() {
                 onClick={() => set("num_teams", String(n))}
                 data-testid={`teams-${n}`}
                 className={`flex-1 py-4 border rounded-none font-display text-3xl transition-colors ${
-                  form.num_teams === String(n)
-                    ? "border-[#CCFF00] text-[#CCFF00] bg-[#CCFF00]/5"
-                    : "border-white/15 text-white/50 hover:border-white/40"
+                  form.num_teams === String(n) ? "border-[#CCFF00] text-[#CCFF00] bg-[#CCFF00]/5" : "border-white/15 text-white/50 hover:border-white/40"
                 }`}
               >
                 {n}
@@ -138,11 +138,43 @@ export default function CreateMatch() {
           </div>
         </Field>
 
+        {/* Saved Squad */}
+        <div className="mb-6 glass rounded-xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <SectionLabel>/ Saved squad ({savedCount})</SectionLabel>
+            <button
+              type="button"
+              onClick={loadSquad}
+              data-testid="load-squad-btn"
+              className="inline-flex items-center gap-2 border border-white/20 hover:border-[#CCFF00] hover:text-[#CCFF00] text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-colors"
+            >
+              <Users size={12} /> Load Saved Squad
+            </button>
+          </div>
+          {squad.length === 0 ? (
+            <p className="text-white/40 text-xs">Load a previously-saved squad to pre-fill this match's roster. You'll still be able to edit before creating.</p>
+          ) : (
+            <ul className="divide-y divide-white/5" data-testid="squad-preview">
+              {squad.map((p) => (
+                <li key={p.phone} className="flex items-center justify-between py-2 text-sm">
+                  <div>
+                    <span className="text-white/90">{p.name}</span>
+                    <span className="ml-2 text-[10px] uppercase tracking-widest text-white/40">{p.position} · R{p.rating}</span>
+                  </div>
+                  <button type="button" onClick={() => removeFromSquad(p.phone)} className="text-white/40 hover:text-red-400 transition-colors">
+                    <Trash2 size={14} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         <button
           type="submit"
           disabled={loading}
           data-testid="submit-create"
-          className="mt-8 w-full bg-[#CCFF00] text-black font-bold uppercase tracking-[0.2em] px-6 py-5 rounded-full hover:scale-[1.02] transition-transform disabled:opacity-50 accent-glow"
+          className="mt-2 w-full bg-[#CCFF00] text-black font-bold uppercase tracking-[0.2em] px-6 py-5 rounded-full hover:scale-[1.02] transition-transform disabled:opacity-50 accent-glow"
         >
           {loading ? "Creating..." : "Create Match →"}
         </button>

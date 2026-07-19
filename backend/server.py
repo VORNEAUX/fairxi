@@ -57,6 +57,17 @@ class MVPVoteIn(BaseModel):
     vote_for_player_id: str
 
 
+class BulkPlayer(BaseModel):
+    name: str
+    phone: str
+    position: Position
+    rating: int = Field(ge=1, le=5)
+
+
+class BulkAddIn(BaseModel):
+    players: List[BulkPlayer]
+
+
 # ---------- HELPERS ----------
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -254,6 +265,41 @@ async def remove_player(match_id: str, admin_token: str, player_id: str):
     if res.deleted_count == 0:
         raise HTTPException(404, "Player not found")
     return {"ok": True}
+
+
+@api_router.post("/matches/{match_id}/admin/{admin_token}/bulk-add")
+async def bulk_add_players(match_id: str, admin_token: str, body: BulkAddIn):
+    match = await get_match_or_404(match_id)
+    if match["admin_token"] != admin_token:
+        raise HTTPException(403, "Invalid admin token")
+    existing = await get_players(match_id)
+    existing_phones = {p["phone"] for p in existing}
+    added, skipped = 0, 0
+    slots = match["max_players"] - len(existing)
+    for bp in body.players:
+        if slots <= 0:
+            skipped += 1
+            continue
+        if bp.phone in existing_phones:
+            skipped += 1
+            continue
+        await db.players.insert_one(
+            {
+                "id": new_id(),
+                "match_id": match_id,
+                "name": bp.name.strip(),
+                "phone": bp.phone.strip(),
+                "position": bp.position,
+                "rating": int(bp.rating),
+                "team_number": None,
+                "paid": False,
+                "created_at": now_iso(),
+            }
+        )
+        existing_phones.add(bp.phone)
+        added += 1
+        slots -= 1
+    return {"added": added, "skipped": skipped}
 
 
 @api_router.post("/matches/{match_id}/admin/{admin_token}/generate-teams")

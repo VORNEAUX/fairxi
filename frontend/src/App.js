@@ -11,6 +11,7 @@ import JoinPage from "@/pages/JoinPage";
 import AdminPanel from "@/pages/AdminPanel";
 import MVPVoting from "@/pages/MVPVoting";
 import PlayerHistory from "@/pages/PlayerHistory";
+import MyMatches from "@/pages/MyMatches";
 
 const Nav = () => {
   const loc = useLocation();
@@ -21,11 +22,18 @@ const Nav = () => {
         <Link to="/" data-testid="nav-home"><Logo /></Link>
         <nav className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider">
           <Link
+            to="/my-matches"
+            data-testid="nav-my-matches"
+            className={`px-3 py-2 rounded-full transition-colors ${on("/my-matches") ? "text-[#CCFF00]" : "text-white/70 hover:text-white"}`}
+          >
+            My Matches
+          </Link>
+          <Link
             to="/history"
             data-testid="nav-history"
             className={`px-3 py-2 rounded-full transition-colors ${on("/history") ? "text-[#CCFF00]" : "text-white/70 hover:text-white"}`}
           >
-            Player History
+            <span className="hidden sm:inline">Player </span>History
           </Link>
           <Link
             to="/create"
@@ -53,6 +61,7 @@ function App() {
           <Route path="/admin/:matchId/:adminToken" element={<AdminPanel />} />
           <Route path="/vote/:matchId" element={<MVPVoting />} />
           <Route path="/history" element={<PlayerHistory />} />
+          <Route path="/my-matches" element={<MyMatches />} />
         </Routes>
         <Toaster theme="dark" position="top-center" richColors />
       </BrowserRouter>
