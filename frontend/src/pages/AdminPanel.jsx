@@ -9,6 +9,7 @@ import { Trash2, Save, Users, Download, Send, Wallet } from "lucide-react";
 import { getSavedSquad, saveSquad } from "@/lib/storage";
 import { downloadRecap, shareRecap } from "@/lib/recap";
 import { buildBroadcastMessage, openWhatsAppBroadcast, PAY_PROVIDERS, getPayPrefs, setPayPrefs } from "@/lib/broadcast";
+import { openExternal } from "@/lib/openLink";
 
 const PaymentDeepLink = ({ share, matchName }) => {
   const [prefs, setPrefsState] = React.useState(() => getPayPrefs());
@@ -80,8 +81,7 @@ const PaymentDeepLink = ({ share, matchName }) => {
       {link && (
         <a
           href={link}
-          target="_blank"
-          rel="noreferrer"
+          onClick={(e) => { e.preventDefault(); openExternal(link); }}
           data-testid="pay-open-btn"
           className="mt-2 block text-[10px] break-all text-[#CCFF00] hover:underline"
         >

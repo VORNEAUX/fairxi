@@ -36,7 +36,15 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def seed_demo():
-    """Seed a single demo match on first startup."""
+    """Seed a single demo match on first startup.
+
+    Gated by SEED_DEMO=true — production must leave this unset (or set to false)
+    so the live database never receives synthetic data. Preview/dev sets it to
+    true so the /demo route always has something to render.
+    """
+    if os.environ.get("SEED_DEMO", "false").lower() not in ("1", "true", "yes"):
+        logger.info("SEED_DEMO is not enabled — skipping demo seed.")
+        return
     existing = await db.matches.find_one({"is_demo": True})
     if existing:
         return

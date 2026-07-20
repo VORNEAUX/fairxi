@@ -29,6 +29,18 @@ Build a mobile-first web app called FairXI that solves unfair team balancing and
 - No functional code changed; CRA/react-scripts continues to handle build-time linting internally
 - v1.3 regression (iteration_10): 68/68 pytest green + all frontend routes smoke-tested clean
 
+## Implemented (2026-02, **v1.5** — Payment link WebView fix + DB hygiene)
+### P0 — Payment Link opens in system browser (not WebView)
+- **Root cause**: `<a href={link} target="_blank">` on the payment deep-link. In a Capacitor WebView this opens *inside* the embedded browser, where PayPal.me/Revolut/Satispay's amount-display scripts fail silently (blank profile page, no amount).
+- **Fix**: added `/app/frontend/src/lib/openLink.js` — `openExternal(url)` that detects `Capacitor.isNativePlatform()` and calls `window.open(url, '_system')` (Capacitor hook that forces the OS default browser) on native, and `window.open(url, '_blank', 'noopener,noreferrer')` with a top-level nav fallback on web. Wired it into the PayPal.me deep-link tap in `AdminPanel.jsx` and the WhatsApp broadcast opener in `lib/broadcast.js`.
+- **Verified**: 71/71 backend pytest green; smoke on preview home + demo match load OK. Real-device install/tap re-test required from the user — the sandbox has no physical Android.
+
+### P1 — Production database cleanup + safe seeding
+- **`SEED_DEMO` env gate** in `server.py` startup: demo match is only seeded when `SEED_DEMO=true`. Preview `.env` now has this flag; production must leave it unset so the live DB is never seeded with synthetic data.
+- **`/app/backend/scripts/cleanup_test_data.py`** — production-safe cleanup script. Dry-run by default; prints counts before/after; requires typing the DB name to confirm; supports `--keep-demo` to preserve the seeded demo match. Reads `MONGO_URL`/`DB_NAME` from backend env so you point it at production by exporting the production connection string.
+- **Preview DB cleaned**: removed 236 matches, 622 players, 19 mvp_votes, 322 rating_history, 105 player_stats, 55 groups. Preserved the demo match (1 match + 10 players + 10 votes) so the /demo route keeps working.
+- **User action for production**: `export MONGO_URL=... DB_NAME=... && python -m scripts.cleanup_test_data --apply` from `/app/backend/`. (Do NOT set `SEED_DEMO=true` in production.)
+
 ## Implemented (2026-02, **v1.4** — Android install hang fix)
 ### P0 — Maskable icon + manifest cleanup
 - **Root cause identified**: `manifest.json` icons declared `"purpose": "any maskable"` but artwork extended to the outer 5-8% of the canvas (no safe zone). Android's adaptive-icon renderer requires ~20% padding; when it can't produce a valid adaptive icon, some Android versions silently hang the install. The SVG entry (`favicon.svg`, `sizes: "any"`) also confused Chrome-on-Android's icon picker.

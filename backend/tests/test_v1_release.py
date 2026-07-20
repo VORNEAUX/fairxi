@@ -202,5 +202,7 @@ class TestPWAAssets:
     def test_service_worker_content(self):
         r = requests.get(f"{BASE}/service-worker.js")
         assert r.status_code == 200
-        assert "fairxi-v2" in r.text
+        # Cache name gets bumped on each PWA-affecting release — assert the pattern,
+        # not the exact version, so bumps don't require a test edit every time.
+        assert "fairxi-v" in r.text
         assert "SKIP_WAITING" in r.text

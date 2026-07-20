@@ -1,4 +1,5 @@
 // FairXI broadcast + payment deep-link helpers (link-generation only, no processing)
+import { openExternal } from "./openLink";
 
 /** Build a pre-filled WhatsApp broadcast text for the whole squad. */
 export function buildBroadcastMessage(match, players, share, origin) {
@@ -25,7 +26,8 @@ export function buildBroadcastMessage(match, players, share, origin) {
 
 export function openWhatsAppBroadcast(message) {
   const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
-  window.open(url, "_blank");
+  // Native-safe: opens the OS's default browser under Capacitor, not the in-app WebView.
+  openExternal(url);
 }
 
 /** Payment providers with deep-link builders. Each returns a URL string. */
