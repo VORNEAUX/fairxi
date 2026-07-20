@@ -2,6 +2,7 @@
 
 const SQUAD_KEY = 'fairxi_saved_squad';
 const MATCHES_KEY = 'fairxi_my_matches';
+const GROUPS_KEY = 'fairxi_my_groups';
 
 export const getSavedSquad = () => {
   try {
@@ -49,4 +50,28 @@ export const addMyMatch = (m) => {
 export const removeMyMatch = (match_id) => {
   const all = getMyMatches().filter((x) => x.match_id !== match_id);
   localStorage.setItem(MATCHES_KEY, JSON.stringify(all));
+};
+
+export const getMyGroups = () => {
+  try {
+    return JSON.parse(localStorage.getItem(GROUPS_KEY) || '[]');
+  } catch {
+    return [];
+  }
+};
+
+export const addMyGroup = (g) => {
+  const all = getMyGroups().filter((x) => x.id !== g.id);
+  all.unshift({
+    id: g.id,
+    admin_token: g.admin_token,
+    name: g.name,
+    created_at: new Date().toISOString(),
+  });
+  localStorage.setItem(GROUPS_KEY, JSON.stringify(all.slice(0, 20)));
+};
+
+export const removeMyGroup = (id) => {
+  const all = getMyGroups().filter((x) => x.id !== id);
+  localStorage.setItem(GROUPS_KEY, JSON.stringify(all));
 };

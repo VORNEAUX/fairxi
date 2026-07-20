@@ -16,6 +16,9 @@ const AdminPanel = React.lazy(() => import("@/pages/AdminPanel"));
 const MVPVoting = React.lazy(() => import("@/pages/MVPVoting"));
 const PlayerHistory = React.lazy(() => import("@/pages/PlayerHistory"));
 const MyMatches = React.lazy(() => import("@/pages/MyMatches"));
+const CreateGroup = React.lazy(() => import("@/pages/CreateGroup"));
+const GroupDashboard = React.lazy(() => import("@/pages/GroupDashboard"));
+const CreateGroupMatch = React.lazy(() => import("@/pages/CreateGroupMatch"));
 
 const InstallButton = ({ variant = "desktop", onDone }) => {
   const { available, trigger } = useInstallPrompt();
@@ -51,6 +54,7 @@ const InstallButton = ({ variant = "desktop", onDone }) => {
 
 const NAV_LINKS = [
   { to: "/my-matches", label: "My Matches", testId: "nav-my-matches" },
+  { to: "/groups", label: "Groups", testId: "nav-groups" },
   { to: "/history", label: "Player History", testId: "nav-history" },
 ];
 
@@ -192,6 +196,9 @@ function App() {
               <Route path="/vote/:matchId" element={<MVPVoting />} />
               <Route path="/history" element={<PlayerHistory />} />
               <Route path="/my-matches" element={<MyMatches />} />
+              <Route path="/groups" element={<CreateGroup />} />
+              <Route path="/group/:groupId/:adminToken" element={<GroupDashboard />} />
+              <Route path="/group/:groupId/:adminToken/new-match" element={<CreateGroupMatch />} />
             </Routes>
           </React.Suspense>
           <UpdateNotifier />

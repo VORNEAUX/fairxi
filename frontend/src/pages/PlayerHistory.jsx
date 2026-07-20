@@ -5,6 +5,25 @@ import { EmptyState } from "@/components/StateViews";
 import { toast } from "sonner";
 import { Trophy, Star } from "lucide-react";
 
+const RatingSparkline = ({ points }) => {
+  if (!points || points.length === 0) return null;
+  const W = 320;
+  const H = 60;
+  const min = Math.min(...points, 1);
+  const max = Math.max(...points, 5);
+  const range = Math.max(0.5, max - min);
+  const step = W / Math.max(1, points.length - 1);
+  const coords = points.map((v, i) => [i * step, H - ((v - min) / range) * H]);
+  const path = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+  const last = coords[coords.length - 1];
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-16" aria-hidden>
+      <path d={path} fill="none" stroke="#CCFF00" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={last[0]} cy={last[1]} r="3.5" fill="#CCFF00" />
+    </svg>
+  );
+};
+
 export default function PlayerHistory() {
   const [phone, setPhone] = useState("");
   const [data, setData] = useState(null);
@@ -18,8 +37,11 @@ export default function PlayerHistory() {
     setLoading(true);
     setSearched(true);
     try {
-      const res = await api.get(`/history/${encodeURIComponent(p)}`);
-      setData(res.data);
+      const [hist, trend] = await Promise.all([
+        api.get(`/history/${encodeURIComponent(p)}`),
+        api.get(`/players/${encodeURIComponent(p)}/rating-history`).catch(() => ({ data: null })),
+      ]);
+      setData({ ...hist.data, dynamic: trend.data });
     } catch (e) {
       toast.error(e.response?.data?.detail || "Lookup failed. Try again in a moment.");
       setData(null);
@@ -74,14 +96,30 @@ export default function PlayerHistory() {
               <div className="font-display text-4xl sm:text-5xl mt-1 text-[#CCFF00] leading-none">{data.matches_played}</div>
             </div>
             <div className="glass rounded-xl p-4 sm:p-5" data-testid="stat-avg">
-              <div className="text-[10px] uppercase tracking-[0.25em] text-white/40">Avg rating</div>
-              <div className="font-display text-4xl sm:text-5xl mt-1 text-[#CCFF00] leading-none">{data.average_rating}</div>
+              <div className="text-[10px] uppercase tracking-[0.25em] text-white/40">
+                {data.dynamic?.current_rating != null ? "Rating" : "Avg rating"}
+              </div>
+              <div className="font-display text-4xl sm:text-5xl mt-1 text-[#CCFF00] leading-none">
+                {data.dynamic?.current_rating != null
+                  ? Number(data.dynamic.current_rating).toFixed(2)
+                  : data.average_rating}
+              </div>
             </div>
             <div className="glass rounded-xl p-4 sm:p-5" data-testid="stat-mvp">
               <div className="text-[10px] uppercase tracking-[0.25em] text-white/40">MVPs</div>
               <div className="font-display text-4xl sm:text-5xl mt-1 text-[#CCFF00] leading-none">{data.mvp_count}</div>
             </div>
           </div>
+
+          {data.dynamic?.history?.length > 1 && (
+            <div className="glass rounded-xl p-5 sm:p-6 mt-4 sm:mt-5" data-testid="rating-trend">
+              <div className="flex items-center justify-between mb-3">
+                <SectionLabel>/ Rating trend</SectionLabel>
+                <span className="text-[10px] uppercase tracking-widest text-white/40">last {data.dynamic.history.length}</span>
+              </div>
+              <RatingSparkline points={data.dynamic.history.map((h) => h.new_rating)} />
+            </div>
+          )}
 
           {data.name && (
             <div className="mt-6 text-white/60 text-sm">

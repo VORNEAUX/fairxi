@@ -273,3 +273,186 @@ export async function shareRecap(payload, filename = 'fairxi-recap.png') {
     }, 'image/png');
   });
 }
+
+/* ------------------ GROUP / SEASON RECAP ------------------ */
+
+async function renderGroupRecap({ group, matches, standings, mvp_leaderboard, top_gainers }) {
+  await loadFonts();
+  const W = 1080;
+  const H = 1350;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, W, H);
+  drawPitchGrid(ctx, W, H);
+  drawCenterCircle(ctx, W / 2, 720, 380);
+  drawCenterCircle(ctx, W - 40, 80, 220);
+
+  // Header
+  drawLogo(ctx, 60, 60, 56);
+  ctx.font = "600 24px 'Bebas Neue', sans-serif";
+  ctx.fillStyle = WHITE;
+  ctx.textBaseline = 'top';
+  ctx.fillText('FAIRXI', 130, 74);
+  ctx.font = "500 16px 'Manrope', sans-serif";
+  ctx.fillStyle = MUTED;
+  ctx.fillText('SEASON RECAP', 130, 100);
+
+  ctx.textAlign = 'right';
+  ctx.font = "500 18px 'Manrope', sans-serif";
+  ctx.fillStyle = ACCENT;
+  ctx.fillText(`${matches.length} MATCHES`, W - 60, 80);
+  ctx.textAlign = 'left';
+
+  // Group name
+  ctx.font = "700 88px 'Bebas Neue', sans-serif";
+  ctx.fillStyle = WHITE;
+  ctx.fillText(truncate((group.name || 'Season').toUpperCase(), 20), 60, 170);
+  ctx.fillStyle = ACCENT;
+  ctx.fillRect(60, 275, 120, 6);
+
+  // Standings top 6
+  let y = 340;
+  ctx.font = "600 20px 'Manrope', sans-serif";
+  ctx.fillStyle = ACCENT;
+  ctx.fillText('STANDINGS · TOP 6', 60, y);
+  y += 44;
+  ctx.fillStyle = SURFACE;
+  ctx.fillRect(60, y, W - 120, 380);
+
+  const top6 = standings.slice(0, 6);
+  ctx.font = "500 14px 'Manrope', sans-serif";
+  ctx.fillStyle = MUTED;
+  ctx.fillText('#', 90, y + 24);
+  ctx.fillText('PLAYER', 130, y + 24);
+  ctx.textAlign = 'right';
+  ctx.fillText('W', 700, y + 24);
+  ctx.fillText('D', 780, y + 24);
+  ctx.fillText('L', 860, y + 24);
+  ctx.fillText('RATING', W - 90, y + 24);
+  ctx.textAlign = 'left';
+
+  top6.forEach((s, i) => {
+    const rowY = y + 60 + i * 50;
+    if (i > 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.beginPath();
+      ctx.moveTo(80, rowY - 12);
+      ctx.lineTo(W - 80, rowY - 12);
+      ctx.stroke();
+    }
+    ctx.font = "700 26px 'Bebas Neue', sans-serif";
+    ctx.fillStyle = i === 0 ? ACCENT : MUTED;
+    ctx.fillText(String(i + 1), 90, rowY + 8);
+    ctx.font = "600 24px 'Manrope', sans-serif";
+    ctx.fillStyle = WHITE;
+    ctx.fillText(truncate(s.name, 18), 130, rowY + 8);
+    ctx.font = "600 22px 'Manrope', sans-serif";
+    ctx.fillStyle = i === 0 ? ACCENT : WHITE;
+    ctx.textAlign = 'right';
+    ctx.fillText(String(s.wins), 700, rowY + 8);
+    ctx.fillStyle = MUTED;
+    ctx.fillText(String(s.draws), 780, rowY + 8);
+    ctx.fillText(String(s.losses), 860, rowY + 8);
+    ctx.fillStyle = ACCENT;
+    ctx.fillText(s.current_rating != null ? Number(s.current_rating).toFixed(2) : '—', W - 90, rowY + 8);
+    ctx.textAlign = 'left';
+  });
+
+  // MVP Leader + Top gainer
+  const mvpTop = 820;
+  ctx.fillStyle = SURFACE;
+  ctx.fillRect(60, mvpTop, (W - 150) / 2, 260);
+  ctx.strokeStyle = ACCENT;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(60, mvpTop, (W - 150) / 2, 260);
+  ctx.font = "600 16px 'Manrope', sans-serif";
+  ctx.fillStyle = ACCENT;
+  ctx.fillText('★  MAN OF THE SEASON', 90, mvpTop + 34);
+  const mvpTop1 = (mvp_leaderboard || []).find((r) => r.mvp_count > 0);
+  if (mvpTop1) {
+    ctx.font = "700 76px 'Bebas Neue', sans-serif";
+    ctx.fillStyle = ACCENT;
+    ctx.fillText(truncate(mvpTop1.name.toUpperCase(), 14), 90, mvpTop + 70);
+    ctx.font = "500 20px 'Manrope', sans-serif";
+    ctx.fillStyle = MUTED;
+    ctx.fillText(`${mvpTop1.mvp_count} MVP awards`, 90, mvpTop + 210);
+  } else {
+    ctx.font = "600 40px 'Bebas Neue', sans-serif";
+    ctx.fillStyle = MUTED;
+    ctx.fillText('TBD', 90, mvpTop + 100);
+  }
+
+  // Top gainer box
+  const gx = 60 + (W - 150) / 2 + 30;
+  ctx.fillStyle = SURFACE;
+  ctx.fillRect(gx, mvpTop, (W - 150) / 2, 260);
+  ctx.font = "600 16px 'Manrope', sans-serif";
+  ctx.fillStyle = ACCENT;
+  ctx.fillText('▲  TOP RATING GAINER', gx + 30, mvpTop + 34);
+  const gainer = (top_gainers || [])[0];
+  if (gainer && gainer.gain > 0) {
+    ctx.font = "700 76px 'Bebas Neue', sans-serif";
+    ctx.fillStyle = WHITE;
+    ctx.fillText(truncate(gainer.name.toUpperCase(), 14), gx + 30, mvpTop + 70);
+    ctx.font = "500 20px 'Manrope', sans-serif";
+    ctx.fillStyle = ACCENT;
+    ctx.fillText(`+${Number(gainer.gain).toFixed(2)} rating`, gx + 30, mvpTop + 210);
+  } else {
+    ctx.font = "600 40px 'Bebas Neue', sans-serif";
+    ctx.fillStyle = MUTED;
+    ctx.fillText('TBD', gx + 30, mvpTop + 100);
+  }
+
+  ctx.font = "600 16px 'Manrope', sans-serif";
+  ctx.fillStyle = MUTED;
+  ctx.textAlign = 'center';
+  ctx.fillText('Balanced teams. Split the pitch. Zero drama.', W / 2, H - 60);
+  ctx.textAlign = 'left';
+
+  return canvas;
+}
+
+export async function downloadGroupRecap(payload, filename = 'fairxi-season.png') {
+  const canvas = await renderGroupRecap(payload);
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+      resolve();
+    }, 'image/png');
+  });
+}
+
+export async function shareGroupRecap(payload, filename = 'fairxi-season.png') {
+  const canvas = await renderGroupRecap(payload);
+  return new Promise((resolve) => {
+    canvas.toBlob(async (blob) => {
+      const file = new File([blob], filename, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: 'FairXI Season Recap' });
+          return resolve('shared');
+        } catch {}
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+      resolve('downloaded');
+    }, 'image/png');
+  });
+}

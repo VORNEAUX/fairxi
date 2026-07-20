@@ -5,9 +5,92 @@ import { SectionLabel } from "@/components/Motifs";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Save, Users, Download } from "lucide-react";
+import { Trash2, Save, Users, Download, Send, Wallet } from "lucide-react";
 import { getSavedSquad, saveSquad } from "@/lib/storage";
 import { downloadRecap, shareRecap } from "@/lib/recap";
+import { buildBroadcastMessage, openWhatsAppBroadcast, PAY_PROVIDERS, getPayPrefs, setPayPrefs } from "@/lib/broadcast";
+
+const PaymentDeepLink = ({ share, matchName }) => {
+  const [prefs, setPrefsState] = React.useState(() => getPayPrefs());
+  const [provider, setProvider] = React.useState(prefs.provider || "");
+  const [handle, setHandle] = React.useState(prefs.handle || "");
+  const [open, setOpen] = React.useState(!!(prefs.provider && prefs.handle));
+
+  const save = () => {
+    const next = { provider, handle };
+    setPayPrefs(next);
+    setPrefsState(next);
+    toast.success("Payment handle saved");
+  };
+
+  const link = provider && handle && PAY_PROVIDERS[provider]
+    ? PAY_PROVIDERS[provider].build(handle, Number(share || 0).toFixed(2), matchName)
+    : null;
+
+  const copy = async () => {
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("Payment link copied");
+    } catch {
+      toast.error("Copy failed — long-press the link instead");
+    }
+  };
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        data-testid="enable-pay-link"
+        className="tap w-full mb-3 border border-white/15 hover:border-[#CCFF00] hover:text-[#CCFF00] text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-full transition-colors"
+      >
+        + Add payment link
+      </button>
+    );
+  }
+
+  return (
+    <div className="mb-4 border border-white/10 rounded-lg p-3" data-testid="pay-link-panel">
+      <div className="text-[10px] uppercase tracking-widest text-white/50 mb-2">Payment deep-link</div>
+      <div className="flex gap-2 mb-2">
+        <Select value={provider} onValueChange={setProvider}>
+          <SelectTrigger className="flex-1 bg-[#050A07] border-white/20 text-xs" data-testid="pay-provider-select">
+            <SelectValue placeholder="Provider" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#0C1812] border-white/10">
+            {Object.values(PAY_PROVIDERS).map((p) => (
+              <SelectItem key={p.id} value={p.id} data-testid={`pay-provider-${p.id}`}>{p.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <input
+        value={handle}
+        onChange={(e) => setHandle(e.target.value)}
+        placeholder={provider ? PAY_PROVIDERS[provider]?.hint : "Enter your handle"}
+        data-testid="pay-handle-input"
+        className="w-full bg-[#050A07] border-b border-white/20 focus:border-[#CCFF00] outline-none px-1 py-2 text-sm text-white placeholder:text-white/25 mb-2"
+      />
+      <div className="flex gap-2">
+        <button onClick={save} data-testid="pay-save-btn"
+          className="tap flex-1 border border-white/20 hover:border-[#CCFF00] hover:text-[#CCFF00] text-[10px] font-bold uppercase tracking-widest py-2 rounded-full">Save</button>
+        <button onClick={copy} disabled={!link} data-testid="pay-copy-btn"
+          className="tap flex-1 bg-[#CCFF00] text-black text-[10px] font-bold uppercase tracking-widest py-2 rounded-full disabled:opacity-40">Copy Link</button>
+      </div>
+      {link && (
+        <a
+          href={link}
+          target="_blank"
+          rel="noreferrer"
+          data-testid="pay-open-btn"
+          className="mt-2 block text-[10px] break-all text-[#CCFF00] hover:underline"
+        >
+          {link}
+        </a>
+      )}
+    </div>
+  );
+};
 
 export default function AdminPanel() {
   const { matchId, adminToken } = useParams();
@@ -73,12 +156,14 @@ export default function AdminPanel() {
     } catch (e) { toast.error("Failed"); }
   };
 
-  const markPlayed = async () => {
+  const markPlayed = async (winning_team) => {
     try {
-      await api.post(`/matches/${matchId}/admin/${adminToken}/mark-played`);
-      toast.success("Marked as played");
+      const res = await api.post(`/matches/${matchId}/admin/${adminToken}/mark-played`, { winning_team });
+      const changes = res.data?.rating_changes || {};
+      const gainers = Object.entries(changes).filter(([, v]) => v.delta > 0).length;
+      toast.success(`Marked as played · ${gainers} players climbed`);
       load();
-    } catch (e) { toast.error("Failed"); }
+    } catch (e) { toast.error(e.response?.data?.detail || "Failed"); }
   };
 
   const openMVP = async () => {
@@ -261,6 +346,7 @@ export default function AdminPanel() {
           <div className="glass rounded-xl p-5 sm:p-6" data-testid="payments-panel">
             <SectionLabel>/ Payments · ${share_per_player}/each</SectionLabel>
             <div className="text-white/50 text-xs uppercase tracking-widest mb-3">{paidCount}/{players.length} paid</div>
+            <PaymentDeepLink share={share_per_player} matchName={match.name} />
             <ul className="divide-y divide-white/5">
               {players.map((p) => (
                 <li key={p.id} className="flex items-center justify-between py-2">
@@ -283,19 +369,46 @@ export default function AdminPanel() {
           {/* Actions */}
           <div className="glass rounded-xl p-5 sm:p-6" data-testid="actions-panel">
             <SectionLabel>/ Match flow</SectionLabel>
-            <button
-              onClick={markPlayed}
-              disabled={!teamsExist || match.status === "played" || match.status === "mvp_voting_open" || match.status === "completed"}
-              data-testid="mark-played-btn"
-              className="w-full mb-3 border border-white/20 text-xs font-bold uppercase tracking-widest py-3 rounded-full hover:border-[#CCFF00] hover:text-[#CCFF00] transition-colors disabled:opacity-40"
-            >
-              Mark as Played
-            </button>
+
+            {/* Winner selector — only shown when teams exist and match not yet played */}
+            {teamsExist && (match.status === "teams_generated" || match.status === "open") && (
+              <div className="mb-3" data-testid="winner-picker">
+                <div className="text-[10px] uppercase tracking-widest text-white/50 mb-2">Result</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {Array.from({ length: match.num_teams }, (_, i) => i + 1).map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => markPlayed(n)}
+                      data-testid={`mark-winner-${n}`}
+                      className="tap py-3 border border-white/15 hover:border-[#CCFF00] hover:text-[#CCFF00] text-xs font-bold uppercase tracking-widest transition-colors"
+                    >
+                      Team {n} won
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => markPlayed(null)}
+                    data-testid="mark-draw"
+                    className="tap col-span-2 py-3 border border-white/15 hover:border-white/40 text-white/70 text-xs font-bold uppercase tracking-widest transition-colors"
+                  >
+                    Draw
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {match.status === "played" || match.status === "mvp_voting_open" || match.status === "completed" ? (
+              <div className="mb-3 text-xs text-white/60">
+                Result recorded: <span className="text-[#CCFF00] uppercase font-bold">
+                  {match.winning_team ? `Team ${match.winning_team} won` : "Draw"}
+                </span>
+              </div>
+            ) : null}
+
             <button
               onClick={openMVP}
               disabled={match.status !== "played" && match.status !== "mvp_voting_open"}
               data-testid="open-mvp-btn"
-              className="w-full bg-[#CCFF00] text-black text-xs font-bold uppercase tracking-widest py-3 rounded-full hover:scale-[1.02] transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
+              className="tap w-full bg-[#CCFF00] text-black text-xs font-bold uppercase tracking-widest py-3 rounded-full hover:scale-[1.02] transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {match.status === "mvp_voting_open" ? "MVP Voting Open ✓" : "Open MVP Voting"}
             </button>
@@ -305,6 +418,27 @@ export default function AdminPanel() {
               </div>
             )}
           </div>
+
+          {/* WhatsApp broadcast — only when teams exist */}
+          {teamsExist && (
+            <div className="glass rounded-xl p-5 sm:p-6" data-testid="broadcast-panel">
+              <div className="flex items-center gap-2 mb-2">
+                <Send size={14} className="text-[#CCFF00]" />
+                <SectionLabel>/ WhatsApp broadcast</SectionLabel>
+              </div>
+              <p className="text-white/50 text-xs mb-3">One tap sends the teams + share link to everyone.</p>
+              <button
+                onClick={() => {
+                  const msg = buildBroadcastMessage(match, players, share_per_player, window.location.origin);
+                  openWhatsAppBroadcast(msg);
+                }}
+                data-testid="broadcast-whatsapp-btn"
+                className="tap w-full bg-[#25D366] text-black font-bold uppercase tracking-[0.2em] text-xs py-3 rounded-full"
+              >
+                Broadcast on WhatsApp
+              </button>
+            </div>
+          )}
 
           {/* Recap */}
           {teamsExist && votingClosedOrDone && (
