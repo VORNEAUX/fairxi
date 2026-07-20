@@ -22,6 +22,39 @@ Build a mobile-first web app called FairXI that solves unfair team balancing and
 - **Frontend**: React + React Router + Tailwind + shadcn/ui + sonner. Bebas Neue (display) + Manrope (body) via Google Fonts. Volt Lime (`#CCFF00`) accent on deep-green-black base.
 - **Team balancing** in `snake_draft()`: sort by rating desc → snake distribute → single-pass same-rating swap for position variety.
 
+## Implemented (2026-02, **v1.2**)
+### Backend router split (P0) — zero behavior change
+- New `/app/backend/deps.py` — shared models, db client, api_router prefix, helpers (`snake_draft`, `rate_limit`, `is_voting_closed`, `get_match_or_404`, etc.)
+- Endpoints extracted into `routers/matches.py`, `routers/mvp.py`, `routers/groups.py`, `routers/players.py`
+- `server.py` reduced from 923 → 114 lines; only wires app + CORS + demo seed
+- Full pytest suite (48/48 across all prior iterations) passes with **zero test modifications**
+
+### Public Privacy page (P1) — store-submission blocker cleared
+- `/privacy` route (public, no auth) styled with the FairXI design system (Bebas Neue hero, lime accents, glass sections, pitch-circle motif)
+- Accurately describes what's collected today: phone, ratings, participation, MVP votes, payment toggles
+- Explicit "no data sold, no third parties, payment links generated client-side"
+- Global `AppFooter` component with `/privacy` link on every non-Home route; Home footer also links to `/privacy`
+
+### MOTS Trophy Reveal (P2)
+- `/app/frontend/src/components/MOTSReveal.jsx` — fullscreen slow-reveal splash
+- Trigger thresholds default `[5, 10, 25, 50]` played matches (configurable via `computeRevealThreshold` prop)
+- Fires **at most once per group per threshold**, tracked in `localStorage["fairxi_mots_reveals_seen"]`
+- Slow reveal in 5 stages: tagline → label → trophy pop → name → CTAs
+- Dismissible: X button, ESC key, or backdrop click; non-blocking (does not disable dashboard behind it)
+- Reuses the existing `downloadGroupRecap` / `shareGroupRecap` for shareable season snapshot
+
+## Store-Readiness Report (updated)
+### Ready — new in v1.2
+- Public `/privacy` URL you can paste into the Play/App Store submission form
+- Backend structure now scales for future additions (routers not a monolith)
+
+### Still outside this perimeter — next generation (Capacitor)
+1. Capacitor wrap + Play/App Store submission (accounts, keystore, cert, screenshots, metadata, privacy questionnaire)
+2. Real payment gateway (currently link-only, by design)
+3. Multi-worker rate limiting via nginx/Cloudflare/Redis
+4. Native push notifications
+5. Admin token rotation policy
+
 ## Implemented (2026-02, **v1.1**)
 ### Dynamic Rating Engine (P0)
 - `rating_engine.py` — Elo-inspired, 1.0–5.0 scale, K=0.15, MVP bonus 0.05/vote, clamped
