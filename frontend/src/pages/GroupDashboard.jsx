@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { api, fmtDate } from "@/lib/api";
 import { SectionLabel } from "@/components/Motifs";
 import { EmptyState } from "@/components/StateViews";
+import MOTSRevealOverlay, { computeRevealThreshold } from "@/components/MOTSReveal";
 import { toast } from "sonner";
 import { ArrowRight, Trophy, Plus, Download } from "lucide-react";
 import { downloadGroupRecap, shareGroupRecap } from "@/lib/recap";
@@ -32,6 +33,7 @@ export default function GroupDashboard() {
   const { groupId, adminToken } = useParams();
   const [data, setData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
+  const [motsReveal, setMotsReveal] = React.useState({ open: false, threshold: null });
 
   const load = async () => {
     try {
@@ -45,6 +47,20 @@ export default function GroupDashboard() {
   };
 
   React.useEffect(() => { load(); }, [groupId, adminToken]);
+
+  // MOTS trophy reveal trigger — once per group per threshold crossing.
+  React.useEffect(() => {
+    if (!data) return;
+    const playedCount = data.matches.filter(
+      (m) => m.status === "played" || m.status === "completed" || m.status === "mvp_voting_open",
+    ).length;
+    const threshold = computeRevealThreshold(playedCount, groupId);
+    if (threshold != null) {
+      // Slight delay so the dashboard renders first, feels like an event.
+      const t = setTimeout(() => setMotsReveal({ open: true, threshold }), 600);
+      return () => clearTimeout(t);
+    }
+  }, [data, groupId]);
 
   if (loading) return <div className="p-10 text-white/60">Loading...</div>;
   if (!data) return <div className="p-10 text-white/60">Group not found.</div>;
@@ -219,6 +235,18 @@ export default function GroupDashboard() {
           </ul>
         )}
       </section>
+      <MOTSRevealOverlay
+        open={motsReveal.open}
+        threshold={motsReveal.threshold}
+        leader={(mvp_leaderboard || []).find((r) => r.mvp_count > 0)}
+        groupName={group.name}
+        groupId={groupId}
+        matches={matches}
+        standings={standings}
+        mvp_leaderboard={mvp_leaderboard}
+        top_gainers={top_gainers}
+        onClose={() => setMotsReveal({ open: false, threshold: null })}
+      />
     </main>
   );
 }

@@ -181,7 +181,16 @@ export default function Home() {
       <footer className="border-t border-white/10 py-8 sm:py-10">
         <div className="max-w-6xl mx-auto px-5 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-white/40 text-[10px] sm:text-xs uppercase tracking-widest">
           <Logo />
-          <span className="max-w-[16rem] sm:max-w-none leading-relaxed">Built for the beautiful weeknight game</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <span className="max-w-[16rem] sm:max-w-none leading-relaxed">Built for the beautiful weeknight game</span>
+            <Link
+              to="/privacy"
+              data-testid="home-footer-privacy"
+              className="tap hover:text-[#CCFF00] transition-colors"
+            >
+              Privacy
+            </Link>
+          </div>
         </div>
       </footer>
     </main>

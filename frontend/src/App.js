@@ -19,6 +19,7 @@ const MyMatches = React.lazy(() => import("@/pages/MyMatches"));
 const CreateGroup = React.lazy(() => import("@/pages/CreateGroup"));
 const GroupDashboard = React.lazy(() => import("@/pages/GroupDashboard"));
 const CreateGroupMatch = React.lazy(() => import("@/pages/CreateGroupMatch"));
+const Privacy = React.lazy(() => import("@/pages/Privacy"));
 
 const InstallButton = ({ variant = "desktop", onDone }) => {
   const { available, trigger } = useInstallPrompt();
@@ -180,6 +181,26 @@ const UpdateNotifier = () => {
   return null;
 };
 
+const AppFooter = () => {
+  const loc = useLocation();
+  // Home has its own richer footer; suppress the app footer there to avoid duplication.
+  if (loc.pathname === "/") return null;
+  return (
+    <footer className="border-t border-white/10 mt-16 py-6" data-testid="app-footer">
+      <div className="max-w-6xl mx-auto px-5 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[10px] uppercase tracking-widest text-white/40">
+        <span>FAIR<span className="text-[#CCFF00]">XI</span> · Balanced teams, split the pitch.</span>
+        <Link
+          to="/privacy"
+          data-testid="footer-privacy-link"
+          className="tap hover:text-[#CCFF00] transition-colors"
+        >
+          Privacy
+        </Link>
+      </div>
+    </footer>
+  );
+};
+
 function App() {
   return (
     <div className="App">
@@ -199,8 +220,10 @@ function App() {
               <Route path="/groups" element={<CreateGroup />} />
               <Route path="/group/:groupId/:adminToken" element={<GroupDashboard />} />
               <Route path="/group/:groupId/:adminToken/new-match" element={<CreateGroupMatch />} />
+              <Route path="/privacy" element={<Privacy />} />
             </Routes>
           </React.Suspense>
+          <AppFooter />
           <UpdateNotifier />
           <Toaster theme="dark" position="top-center" richColors />
         </BrowserRouter>
