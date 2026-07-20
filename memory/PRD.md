@@ -23,6 +23,12 @@ Build a mobile-first web app called FairXI that solves unfair team balancing and
 - **Team balancing** in `snake_draft()`: sort by rating desc → snake distribute → single-pass same-rating swap for position variety.
 
 ## Implemented (2026-02, **v1.3**)
+### ESLint flat-config (dev-tooling fix)
+- Added `/app/frontend/eslint.config.js` (minimal permissive flat config) — required by ESLint v9 which is installed as a devDependency
+- Unblocks the pre-completion linter (`npx eslint src/` now runs with 0 errors)
+- No functional code changed; CRA/react-scripts continues to handle build-time linting internally
+- v1.3 regression (iteration_10): 68/68 pytest green + all frontend routes smoke-tested clean
+
 ### Capacitor Native Wrap — infrastructure (P0)
 - `@capacitor/core|cli|android|ios|share|app` v7 installed
 - `/app/frontend/capacitor.config.json` — `appId: com.vorneaux.fairxi`, `appName: FairXI`, `webDir: build`, dark background color

@@ -27,7 +27,6 @@ root.render(
 // can double-register / conflict with capacitor:// asset serving.
 const isNative = () => {
   try {
-    // eslint-disable-next-line no-undef
     return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   } catch { return false; }
 };
