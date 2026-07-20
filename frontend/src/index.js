@@ -22,8 +22,17 @@ root.render(
   </React.StrictMode>,
 );
 
-// Register PWA service worker with update-available notification
-if ("serviceWorker" in navigator && window.location.protocol === "https:") {
+// Register PWA service worker with update-available notification.
+// Skip on native (Capacitor) — the native shell handles updates and a stray SW
+// can double-register / conflict with capacitor:// asset serving.
+const isNative = () => {
+  try {
+    // eslint-disable-next-line no-undef
+    return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  } catch { return false; }
+};
+
+if ("serviceWorker" in navigator && window.location.protocol === "https:" && !isNative()) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("/service-worker.js")

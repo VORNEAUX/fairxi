@@ -13,6 +13,11 @@ export const InstallPromptProvider = ({ children }) => {
   const [prompt, setPrompt] = React.useState(null);
 
   React.useEffect(() => {
+    // Inside a Capacitor native shell there is no PWA install prompt — the app
+    // is already installed. Skip the listener entirely so we don't hold refs.
+    try {
+      if (window.Capacitor?.isNativePlatform?.()) return;
+    } catch { /* ignore */ }
     const onBip = (e) => {
       e.preventDefault();
       setPrompt(e);

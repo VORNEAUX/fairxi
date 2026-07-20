@@ -1,0 +1,14 @@
+{
+  "appId": "com.vorneaux.fairxi",
+  "appName": "FairXI",
+  "webDir": "build",
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "contentInset": "always"
+  },
+  "android": {
+    "backgroundColor": "#050A07"
+  }
+}

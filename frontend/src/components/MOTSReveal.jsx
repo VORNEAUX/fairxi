@@ -40,6 +40,57 @@ export function computeRevealThreshold(playedCount, groupId, thresholds = DEFAUL
  * Fullscreen slow-reveal splash for the current Man of the Season.
  * Dismissable, non-blocking (renders in a portal-like overlay).
  */
+const Confetti = () => {
+  // Small, tasteful burst — 32 particles, on-brand lime/white, ~1.6s.
+  const particles = React.useMemo(() => {
+    const arr = [];
+    for (let i = 0; i < 32; i++) {
+      const angle = (i / 32) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+      const distance = 90 + Math.random() * 140;
+      const dx = Math.cos(angle) * distance;
+      const dy = Math.sin(angle) * distance;
+      const size = 4 + Math.random() * 4;
+      const spin = (Math.random() - 0.5) * 720;
+      const delay = Math.random() * 60;
+      const isAccent = Math.random() > 0.25;
+      arr.push({ i, dx, dy, size, spin, delay, color: isAccent ? "#CCFF00" : "rgba(255,255,255,0.9)" });
+    }
+    return arr;
+  }, []);
+  return (
+    <div aria-hidden data-testid="mots-confetti" className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden">
+      {particles.map((p) => (
+        <span
+          key={p.i}
+          style={{
+            position: "absolute",
+            width: p.size,
+            height: p.size,
+            backgroundColor: p.color,
+            borderRadius: p.i % 3 === 0 ? "9999px" : "1px",
+            opacity: 0,
+            "--dx": `${p.dx}px`,
+            "--dy": `${p.dy}px`,
+            "--spin": `${p.spin}deg`,
+            animation: `motsBurst 1600ms cubic-bezier(0.15, 0.6, 0.35, 1) ${p.delay}ms forwards`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes motsBurst {
+          0% { transform: translate(0, 0) rotate(0deg) scale(0.4); opacity: 0; }
+          15% { opacity: 1; }
+          70% { opacity: 1; }
+          100% {
+            transform: translate(var(--dx), calc(var(--dy) + 60px)) rotate(var(--spin)) scale(0.9);
+            opacity: 0;
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
+
 export default function MOTSRevealOverlay({ open, threshold, leader, groupName, groupId, matches, standings, mvp_leaderboard, top_gainers, onClose }) {
   const [stage, setStage] = React.useState(0);
 
@@ -133,6 +184,9 @@ export default function MOTSRevealOverlay({ open, threshold, leader, groupName, 
           }}
         />
       </div>
+
+      {/* Confetti burst — synced with the trophy pop (stage 3) */}
+      {stage >= 3 && <Confetti key={`confetti-${threshold}`} />}
 
       {/* Close */}
       <button

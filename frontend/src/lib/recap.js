@@ -244,23 +244,41 @@ export async function downloadRecap(payload, filename = 'fairxi-recap.png') {
 
 export async function shareRecap(payload, filename = 'fairxi-recap.png') {
   const canvas = await renderRecap(payload);
-  return new Promise((resolve, reject) => {
+  return shareOrDownloadBlob(canvas, filename, 'FairXI Match Recap');
+}
+
+/** Shared share-or-download helper that prefers Capacitor Share on native. */
+async function shareOrDownloadBlob(canvas, filename, title) {
+  return new Promise((resolve) => {
     canvas.toBlob(async (blob) => {
+      // Native (Capacitor) path
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (Capacitor?.isNativePlatform?.()) {
+          const { Share } = await import('@capacitor/share');
+          const { Filesystem, Directory } = await import('@capacitor/filesystem').catch(() => ({}));
+          if (Filesystem) {
+            const base64 = await blobToBase64(blob);
+            const fname = filename;
+            const write = await Filesystem.writeFile({
+              path: fname,
+              data: base64,
+              directory: Directory.Cache,
+            });
+            await Share.share({ title, url: write.uri, dialogTitle: title });
+            return resolve('shared-native');
+          }
+        }
+      } catch { /* fall through to web share */ }
+      // Web Share API
       const file = new File([blob], filename, { type: 'image/png' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-          await navigator.share({
-            files: [file],
-            title: 'FairXI Match Recap',
-            text: 'Match recap from FairXI',
-          });
-          resolve('shared');
-          return;
-        } catch (e) {
-          // fall through
-        }
+          await navigator.share({ files: [file], title, text: title });
+          return resolve('shared');
+        } catch { /* fall through */ }
       }
-      // Fallback: download
+      // Download fallback
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -271,6 +289,15 @@ export async function shareRecap(payload, filename = 'fairxi-recap.png') {
       setTimeout(() => URL.revokeObjectURL(url), 3000);
       resolve('downloaded');
     }, 'image/png');
+  });
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onloadend = () => resolve(String(r.result).split(',')[1]);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
   });
 }
 
@@ -435,24 +462,5 @@ export async function downloadGroupRecap(payload, filename = 'fairxi-season.png'
 
 export async function shareGroupRecap(payload, filename = 'fairxi-season.png') {
   const canvas = await renderGroupRecap(payload);
-  return new Promise((resolve) => {
-    canvas.toBlob(async (blob) => {
-      const file = new File([blob], filename, { type: 'image/png' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title: 'FairXI Season Recap' });
-          return resolve('shared');
-        } catch {}
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 3000);
-      resolve('downloaded');
-    }, 'image/png');
-  });
+  return shareOrDownloadBlob(canvas, filename, 'FairXI Season Recap');
 }
