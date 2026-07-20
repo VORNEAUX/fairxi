@@ -36,8 +36,10 @@ export const PAY_PROVIDERS = {
     hint: "your PayPal.me username",
     build: (handle, amount, note) => {
       if (!handle) return null;
+      const amt = Number(amount);
+      if (!isFinite(amt) || amt < 0) return null;
       const h = handle.replace(/^@/, "").trim();
-      return `https://www.paypal.com/paypalme/${encodeURIComponent(h)}/${encodeURIComponent(amount)}`;
+      return `https://www.paypal.com/paypalme/${encodeURIComponent(h)}/${amt.toFixed(2)}`;
     },
   },
   revolut: {
@@ -46,8 +48,10 @@ export const PAY_PROVIDERS = {
     hint: "your Revolut @tag",
     build: (handle, amount, note) => {
       if (!handle) return null;
+      const amt = Number(amount);
+      if (!isFinite(amt) || amt < 0) return null;
       const h = handle.replace(/^@/, "").trim();
-      return `https://revolut.me/${encodeURIComponent(h)}?amount=${encodeURIComponent(amount)}`;
+      return `https://revolut.me/${encodeURIComponent(h)}?amount=${amt.toFixed(2)}`;
     },
   },
   satispay: {
@@ -56,8 +60,10 @@ export const PAY_PROVIDERS = {
     hint: "your Satispay profile username",
     build: (handle, amount, note) => {
       if (!handle) return null;
+      const amt = Number(amount);
+      if (!isFinite(amt) || amt < 0) return null;
       const h = handle.replace(/^@/, "").trim();
-      return `https://www.satispay.com/app/match/link/user/${encodeURIComponent(h)}?amount=${encodeURIComponent(amount)}`;
+      return `https://www.satispay.com/app/match/link/user/${encodeURIComponent(h)}?amount=${amt.toFixed(2)}`;
     },
   },
 };

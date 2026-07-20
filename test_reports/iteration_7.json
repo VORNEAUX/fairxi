@@ -1,0 +1,24 @@
+{
+  "summary": "Iter7 focused validation of mark-played idempotency fix + PAY_PROVIDERS hardening + regression smoke. Backend: 6/6 pytest PASS in /app/backend/tests/test_iter7_idempotency.py. Critical idempotency test proves: 1st mark-played returns recomputed=True with rating_changes for all 4 players; each phone has matches_played=1 and history length 1. 2nd call with DIFFERENT winning_team (2 vs 1) returns recomputed=False, rating_changes byte-for-byte match the first (same old/new/delta per phone), matches_played and history length still =1 (no dup rows). GET /api/matches/{id} confirms match.winning_team updated to 2 (organizer correction preserved) and status=played. Backward-compat: mark-played without body still 200 and idempotent. Regression smoke: /api/groups POST → returns admin_token >=30 chars, GET /api/groups/{id}/admin/{token} 200 with standings/mvp_leaderboard/top_gainers; wrong token → 403. rating-history endpoint shape valid for unknown phone (current_rating/matches_played/history). Public /api/matches/{id} does not expose admin_token. PAY_PROVIDERS unit-executed via node: NaN and negative amounts return null for all 3 providers (paypalme, revolut, satispay); valid amount=20 produces well-formed URLs with amount formatted to 2 decimals (https://www.paypal.com/paypalme/user/20.00, https://revolut.me/user?amount=20.00, https://www.satispay.com/app/match/link/user/user?amount=20.00). Frontend smoke: /groups page renders, group name form submits, backend returns 200, SPA navigates to /group/:id/:token, dashboard shows STANDINGS/MOTS LEADERBOARD/TOP RATING GAINERS/SEASON RECAP CARD panels and correct group-name testid. Zero JS errors observed. Iter6 already fully validated the deep flow (join players, generate teams, mark winner, WhatsApp broadcast, PaymentDeepLink UI), so per main-agent instruction not to re-run all v1.1 tests, that flow was NOT re-exercised end-to-end here.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter7_idempotency.py",
+    "/app/test_reports/pytest/iter7_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is now ~923 lines — 700-line threshold exceeded, still recommended to split into routers (matches.py, groups.py, mvp.py, ratings.py). Same call-out as iter6.",
+    "mark-played idempotency implemented via `db.rating_history.find_one({match_id})` probe. This is correct but scan-based; consider adding an index on rating_history.match_id if group history grows large.",
+    "mark-played idempotent branch does not update played_at on subsequent calls, only status+winning_team. This is desirable (preserves original play time) but should be documented in the endpoint docstring so consumers don't rely on played_at bumping.",
+    "PAY_PROVIDERS builders defend against NaN/negative but still accept 0 (returns .../0.00). Acceptable but worth deciding if 0 should be treated as 'no share yet' and also return null.",
+    "No pytest coverage yet for the WhatsApp broadcast text builder (`buildBroadcastMessage`) or PAY_PROVIDERS.build — currently only smoked manually via node/UI. A Jest/Vitest unit test would lock in the URL format contract."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter7_idempotency.py (new)"],
+  "success_rate": {"backend": "100% (6/6 iter7 focused + iter6 suite intact)", "frontend": "100% smoke of critical paths"},
+  "seed_data_creation": "Ephemeral TEST_* prefixed matches/groups via API + one TEST_UI_Iter7b group via UI. No cleanup performed.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Idempotency fix verified: mark-played is safe to double-tap. If a future change introduces PATCH /matches/{id}/result or similar, ensure it also does NOT touch rating_history when a rating row for that match_id already exists. PAY_PROVIDERS.build contract: null on non-numeric or negative amount, .toFixed(2) on the URL. Preserve this in any refactor.",
+  "rca of the issue": "N/A — fix worked. Iter6 had flagged that mark-played was non-idempotent (double matches_played + duplicate rating_history rows). Iter7 fix: mark_played() now checks db.rating_history.find_one({match_id}) before recomputing; if found, it only updates status+winning_team on the match doc and returns previous rating_changes with recomputed=False. Verified via pytest that a second call with a different winning_team leaves per-player matches_played and history counts at 1 while still updating the match's winning_team field."
+}

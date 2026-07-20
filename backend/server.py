@@ -434,6 +434,26 @@ async def mark_played(match_id: str, admin_token: str, body: Optional[MarkPlayed
     if winning_team is not None and winning_team > match["num_teams"]:
         raise HTTPException(400, "Winning team out of range")
 
+    # Idempotency: if the match has already been rated (rating_history rows exist for this match_id),
+    # do not recompute. Just refresh the winning_team on the match doc and return the previous changes.
+    already_rated = await db.rating_history.find_one({"match_id": match_id}, {"_id": 0})
+    if already_rated:
+        await db.matches.update_one(
+            {"id": match_id},
+            {"$set": {"status": "played", "winning_team": winning_team}},
+        )
+        prior = await db.rating_history.find({"match_id": match_id}, {"_id": 0}).to_list(200)
+        rating_changes = {
+            r["phone"]: {
+                "old": r["old_rating"],
+                "new": r["new_rating"],
+                "delta": r["delta"],
+                "mvp_votes": r.get("mvp_votes", 0),
+            }
+            for r in prior
+        }
+        return {"ok": True, "rating_changes": rating_changes, "recomputed": False}
+
     # Persist result and mark played
     await db.matches.update_one(
         {"id": match_id},
@@ -443,7 +463,7 @@ async def mark_played(match_id: str, admin_token: str, body: Optional[MarkPlayed
     fresh_match = await get_match_or_404(match_id)
     players = await get_players(match_id)
     rating_changes = await recalculate_after_match(db, fresh_match, players)
-    return {"ok": True, "rating_changes": rating_changes}
+    return {"ok": True, "rating_changes": rating_changes, "recomputed": True}
 
 
 @api_router.get("/players/{phone}/rating-history")
