@@ -16,6 +16,9 @@ export default function JoinPage() {
   const [submitting, setSubmitting] = useState(false);
   const [joined, setJoined] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", position: "Midfielder", rating: 3 });
+  const [errors, setErrors] = useState({});
+  const nameRef = React.useRef(null);
+  const phoneRef = React.useRef(null);
 
   const load = async () => {
     try {
@@ -32,7 +35,18 @@ export default function JoinPage() {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.phone) return toast.error("Fill in your name and phone");
+    const errs = {};
+    if (!form.name.trim()) errs.name = "Enter your name.";
+    else if (form.name.trim().length > 60) errs.name = "Name is too long (max 60 chars).";
+    const phone = form.phone.trim();
+    if (!phone) errs.phone = "Add a phone number so we can spot duplicates.";
+    else if (!/^[+()\-.\s\d]{5,32}$/.test(phone)) errs.phone = "That phone number doesn't look right.";
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      (errs.name ? nameRef : phoneRef).current?.focus?.();
+      return;
+    }
+    setErrors({});
     setSubmitting(true);
     try {
       await api.post(`/matches/${matchId}/join`, form);
@@ -132,11 +146,28 @@ export default function JoinPage() {
               <form onSubmit={submit} className="glass rounded-xl p-6" data-testid="join-form">
               <div className="mb-5">
                 <label className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#CCFF00]">Name</label>
-                <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} data-testid="join-name" />
+                <input
+                  ref={nameRef}
+                  className={inputCls}
+                  value={form.name}
+                  onChange={(e) => { setForm({ ...form, name: e.target.value }); if (errors.name) setErrors({ ...errors, name: null }); }}
+                  data-testid="join-name"
+                  aria-invalid={!!errors.name}
+                />
+                {errors.name && <div className="text-red-400 text-xs mt-1.5" data-testid="join-name-error">{errors.name}</div>}
               </div>
               <div className="mb-5">
                 <label className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#CCFF00]">Phone number</label>
-                <input className={inputCls} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} data-testid="join-phone" />
+                <input
+                  ref={phoneRef}
+                  inputMode="tel"
+                  className={inputCls}
+                  value={form.phone}
+                  onChange={(e) => { setForm({ ...form, phone: e.target.value }); if (errors.phone) setErrors({ ...errors, phone: null }); }}
+                  data-testid="join-phone"
+                  aria-invalid={!!errors.phone}
+                />
+                {errors.phone && <div className="text-red-400 text-xs mt-1.5" data-testid="join-phone-error">{errors.phone}</div>}
               </div>
               <div className="mb-5">
                 <label className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#CCFF00]">Preferred position</label>

@@ -1,46 +1,29 @@
 import React from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { Download, Menu, X, Plus } from "lucide-react";
 import { Logo } from "@/components/Motifs";
+import { PageLoader } from "@/components/StateViews";
+import { InstallPromptProvider, useInstallPrompt } from "@/context/InstallPromptContext";
 
-import Home from "@/pages/Home";
-import CreateMatch from "@/pages/CreateMatch";
-import MatchCreated from "@/pages/MatchCreated";
-import JoinPage from "@/pages/JoinPage";
-import AdminPanel from "@/pages/AdminPanel";
-import MVPVoting from "@/pages/MVPVoting";
-import PlayerHistory from "@/pages/PlayerHistory";
-import MyMatches from "@/pages/MyMatches";
-
-const useInstallPrompt = () => {
-  const [prompt, setPrompt] = React.useState(null);
-  React.useEffect(() => {
-    const onBip = (e) => { e.preventDefault(); setPrompt(e); };
-    const onInstalled = () => setPrompt(null);
-    window.addEventListener("beforeinstallprompt", onBip);
-    window.addEventListener("appinstalled", onInstalled);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onBip);
-      window.removeEventListener("appinstalled", onInstalled);
-    };
-  }, []);
-  const trigger = React.useCallback(async () => {
-    if (!prompt) return;
-    try {
-      prompt.prompt();
-      const { outcome } = await prompt.userChoice;
-      if (outcome === "accepted") setPrompt(null);
-    } catch { setPrompt(null); }
-  }, [prompt]);
-  return { available: !!prompt, trigger };
-};
+// Lazy-loaded routes — reduces initial JS on mobile
+const Home = React.lazy(() => import("@/pages/Home"));
+const CreateMatch = React.lazy(() => import("@/pages/CreateMatch"));
+const MatchCreated = React.lazy(() => import("@/pages/MatchCreated"));
+const JoinPage = React.lazy(() => import("@/pages/JoinPage"));
+const AdminPanel = React.lazy(() => import("@/pages/AdminPanel"));
+const MVPVoting = React.lazy(() => import("@/pages/MVPVoting"));
+const PlayerHistory = React.lazy(() => import("@/pages/PlayerHistory"));
+const MyMatches = React.lazy(() => import("@/pages/MyMatches"));
 
 const InstallButton = ({ variant = "desktop", onDone }) => {
   const { available, trigger } = useInstallPrompt();
   if (!available) return null;
-  const handle = async () => { await trigger(); onDone && onDone(); };
+  const handle = async () => {
+    await trigger();
+    onDone && onDone();
+  };
   if (variant === "mobile") {
     return (
       <button
@@ -76,7 +59,17 @@ const Nav = () => {
   const [open, setOpen] = React.useState(false);
   const on = (p) => loc.pathname === p;
 
-  React.useEffect(() => { setOpen(false); }, [loc.pathname]);
+  React.useEffect(() => {
+    setOpen(false);
+  }, [loc.pathname]);
+
+  // Close menu on Escape for keyboard users
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   return (
     <header className="sticky top-0 z-40 glass border-b border-white/10">
@@ -93,7 +86,9 @@ const Nav = () => {
               key={l.to}
               to={l.to}
               data-testid={l.testId}
-              className={`tap px-3 py-2 rounded-full transition-colors ${on(l.to) ? "text-[#CCFF00]" : "text-white/70 hover:text-white"}`}
+              className={`tap px-3 py-2 rounded-full transition-colors ${
+                on(l.to) ? "text-[#CCFF00]" : "text-white/70 hover:text-white"
+              }`}
             >
               {l.label}
             </Link>
@@ -121,6 +116,7 @@ const Nav = () => {
             data-testid="nav-menu-toggle"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
+            aria-controls="mobile-nav-menu"
             className="tap w-11 h-11 inline-flex items-center justify-center rounded-full border border-white/15 text-white/85"
           >
             {open ? <X size={18} /> : <Menu size={18} />}
@@ -130,7 +126,13 @@ const Nav = () => {
 
       {/* Mobile menu dropdown */}
       {open && (
-        <div className="md:hidden border-t border-white/10 bg-[#050A07]/95 backdrop-blur-md" data-testid="nav-menu">
+        <div
+          id="mobile-nav-menu"
+          role="navigation"
+          aria-label="Mobile"
+          className="md:hidden border-t border-white/10 bg-[#050A07]/95 backdrop-blur-md"
+          data-testid="nav-menu"
+        >
           <div className="max-w-6xl mx-auto px-5 py-2 flex flex-col text-xs font-bold uppercase tracking-widest">
             <InstallButton variant="mobile" onDone={() => setOpen(false)} />
             {NAV_LINKS.map((l) => (
@@ -153,23 +155,49 @@ const Nav = () => {
   );
 };
 
+const UpdateNotifier = () => {
+  React.useEffect(() => {
+    const onUpdate = () => {
+      toast(
+        "A new version is available",
+        {
+          description: "Reload to get the latest FairXI.",
+          duration: 20000,
+          action: {
+            label: "Reload",
+            onClick: () => window.location.reload(),
+          },
+        },
+      );
+    };
+    window.addEventListener("fairxi:update-available", onUpdate);
+    return () => window.removeEventListener("fairxi:update-available", onUpdate);
+  }, []);
+  return null;
+};
+
 function App() {
   return (
     <div className="App">
-      <BrowserRouter>
-        <Nav />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/create" element={<CreateMatch />} />
-          <Route path="/created/:matchId/:adminToken" element={<MatchCreated />} />
-          <Route path="/m/:matchId" element={<JoinPage />} />
-          <Route path="/admin/:matchId/:adminToken" element={<AdminPanel />} />
-          <Route path="/vote/:matchId" element={<MVPVoting />} />
-          <Route path="/history" element={<PlayerHistory />} />
-          <Route path="/my-matches" element={<MyMatches />} />
-        </Routes>
-        <Toaster theme="dark" position="top-center" richColors />
-      </BrowserRouter>
+      <InstallPromptProvider>
+        <BrowserRouter>
+          <Nav />
+          <React.Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/create" element={<CreateMatch />} />
+              <Route path="/created/:matchId/:adminToken" element={<MatchCreated />} />
+              <Route path="/m/:matchId" element={<JoinPage />} />
+              <Route path="/admin/:matchId/:adminToken" element={<AdminPanel />} />
+              <Route path="/vote/:matchId" element={<MVPVoting />} />
+              <Route path="/history" element={<PlayerHistory />} />
+              <Route path="/my-matches" element={<MyMatches />} />
+            </Routes>
+          </React.Suspense>
+          <UpdateNotifier />
+          <Toaster theme="dark" position="top-center" richColors />
+        </BrowserRouter>
+      </InstallPromptProvider>
     </div>
   );
 }

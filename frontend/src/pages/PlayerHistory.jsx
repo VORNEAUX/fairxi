@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { api, fmtDate } from "@/lib/api";
 import { SectionLabel } from "@/components/Motifs";
+import { EmptyState } from "@/components/StateViews";
 import { toast } from "sonner";
 import { Trophy, Star } from "lucide-react";
 
@@ -8,21 +9,26 @@ export default function PlayerHistory() {
   const [phone, setPhone] = useState("");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
 
   const search = async (e) => {
     e.preventDefault();
-    if (!phone) return;
+    const p = phone.trim();
+    if (!p) return toast.error("Enter a phone number to look up");
     setLoading(true);
+    setSearched(true);
     try {
-      const res = await api.get(`/history/${encodeURIComponent(phone.trim())}`);
+      const res = await api.get(`/history/${encodeURIComponent(p)}`);
       setData(res.data);
-      if (res.data.matches_played === 0) toast("No matches on record for this number");
     } catch (e) {
-      toast.error("Lookup failed");
+      toast.error(e.response?.data?.detail || "Lookup failed. Try again in a moment.");
+      setData(null);
     } finally {
       setLoading(false);
     }
   };
+
+  const noResults = searched && !loading && data && data.matches_played === 0;
 
   return (
     <main className="max-w-3xl mx-auto px-5 sm:px-6 py-8 sm:py-10">
@@ -50,7 +56,17 @@ export default function PlayerHistory() {
         </button>
       </form>
 
-      {data && (
+      {noResults && (
+        <div className="mt-8 sm:mt-10">
+          <EmptyState
+            testId="history-empty"
+            title="No match record yet"
+            hint="This phone number hasn't played a FairXI match. Join one, then come back to see your stats."
+          />
+        </div>
+      )}
+
+      {data && data.matches_played > 0 && (
         <>
           <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-8 sm:mt-10">
             <div className="glass rounded-xl p-4 sm:p-5" data-testid="stat-matches">

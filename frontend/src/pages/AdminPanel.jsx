@@ -66,6 +66,13 @@ export default function AdminPanel() {
     } catch (e) { toast.error("Failed"); }
   };
 
+  const setRating = async (pid, rating) => {
+    try {
+      await api.patch(`/matches/${matchId}/admin/${adminToken}/players/${pid}/rating`, { rating: parseInt(rating) });
+      load();
+    } catch (e) { toast.error("Failed"); }
+  };
+
   const markPlayed = async () => {
     try {
       await api.post(`/matches/${matchId}/admin/${adminToken}/mark-played`);
@@ -171,23 +178,41 @@ export default function AdminPanel() {
               {players.map((p, i) => (
                 <li
                   key={p.id}
-                  className="flex items-center justify-between py-3 stagger-in"
+                  className="flex items-center justify-between py-3 gap-3 stagger-in"
                   style={{ animationDelay: `${i * 40}ms` }}
                 >
-                  <div>
-                    <div className="text-white/90">{p.name}</div>
-                    <div className="text-[10px] uppercase tracking-widest text-white/40">{p.position} · Rating {p.rating}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-white/90 truncate">{p.name}</div>
+                    <div className="text-[10px] uppercase tracking-widest text-white/40">{p.position}</div>
                   </div>
+                  <Select value={String(p.rating)} onValueChange={(v) => setRating(p.id, v)}>
+                    <SelectTrigger className="w-20 bg-[#050A07] border-white/20 text-xs uppercase tracking-widest" data-testid={`rating-select-${p.id}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0C1812] border-white/10">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <SelectItem key={n} value={String(n)} data-testid={`rating-option-${p.id}-${n}`}>R {n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <button
                     onClick={() => remove(p.id)}
                     data-testid={`remove-${p.id}`}
-                    className="text-white/40 hover:text-red-400 transition-colors"
+                    aria-label={`Remove ${p.name}`}
+                    className="tap w-11 h-11 inline-flex items-center justify-center text-white/40 hover:text-red-400 transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
                 </li>
               ))}
-              {players.length === 0 && <li className="py-6 text-white/40 italic">No players yet.</li>}
+              {players.length === 0 && (
+                <li className="py-8" data-testid="admin-roster-empty">
+                  <div className="text-center">
+                    <div className="font-display text-2xl uppercase text-[#CCFF00]">The dressing room is empty</div>
+                    <p className="text-white/50 text-sm mt-2">Share the public link with your mates. They'll show up here as soon as they join.</p>
+                  </div>
+                </li>
+              )}
             </ul>
           ) : (
             <div className="space-y-5" data-testid="admin-teams-container">

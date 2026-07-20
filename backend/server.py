@@ -52,6 +52,10 @@ class PaymentUpdate(BaseModel):
     paid: bool
 
 
+class RatingUpdate(BaseModel):
+    rating: int = Field(ge=1, le=5)
+
+
 class MVPVoteIn(BaseModel):
     voter_phone: str = Field(min_length=3, max_length=32)
     vote_for_player_id: str = Field(min_length=1, max_length=64)
@@ -82,7 +86,23 @@ def new_id() -> str:
 
 
 def token() -> str:
-    return secrets.token_urlsafe(12)
+    # 24 bytes → 32 url-safe chars, ~192 bits of entropy — safe to share in URLs
+    return secrets.token_urlsafe(24)
+
+
+# Very small in-memory rate limiter — sufficient for a single-process deployment
+# to blunt obvious abuse (join spam, vote spam, match-create flood). For multi-worker
+# production, put a proper limiter (nginx/redis) in front of this app.
+_RATE_BUCKETS: dict = {}
+
+
+def rate_limit(key: str, max_hits: int, window_seconds: int) -> None:
+    now = datetime.now(timezone.utc).timestamp()
+    hits = [t for t in _RATE_BUCKETS.get(key, []) if now - t < window_seconds]
+    if len(hits) >= max_hits:
+        raise HTTPException(429, "Too many requests, please slow down")
+    hits.append(now)
+    _RATE_BUCKETS[key] = hits
 
 
 def scrub(doc: dict) -> dict:
@@ -166,6 +186,7 @@ async def root():
 
 @api_router.post("/matches")
 async def create_match(m: MatchCreate):
+    rate_limit("create_match:global", max_hits=60, window_seconds=60)
     if m.num_teams not in (2, 3, 4):
         raise HTTPException(400, "num_teams must be 2, 3, or 4")
     if m.max_players < 2:
@@ -238,6 +259,7 @@ async def get_match_admin(match_id: str, admin_token: str):
 
 @api_router.post("/matches/{match_id}/join")
 async def join_match(match_id: str, p: PlayerJoin):
+    rate_limit(f"join:{match_id}", max_hits=30, window_seconds=60)
     match = await get_match_or_404(match_id)
     existing = await get_players(match_id)
     if any(pl["phone"] == p.phone for pl in existing):
@@ -357,6 +379,20 @@ async def set_payment(match_id: str, admin_token: str, player_id: str, body: Pay
     return {"ok": True}
 
 
+@api_router.patch("/matches/{match_id}/admin/{admin_token}/players/{player_id}/rating")
+async def set_rating(match_id: str, admin_token: str, player_id: str, body: RatingUpdate):
+    match = await get_match_or_404(match_id)
+    if match["admin_token"] != admin_token:
+        raise HTTPException(403, "Invalid admin token")
+    res = await db.players.update_one(
+        {"id": player_id, "match_id": match_id},
+        {"$set": {"rating": body.rating}},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(404, "Player not found")
+    return {"ok": True}
+
+
 @api_router.post("/matches/{match_id}/admin/{admin_token}/mark-played")
 async def mark_played(match_id: str, admin_token: str):
     match = await get_match_or_404(match_id)
@@ -412,6 +448,7 @@ async def verify_voter(match_id: str, body: MVPVerifyIn):
 
 @api_router.post("/matches/{match_id}/mvp/vote")
 async def cast_mvp_vote(match_id: str, body: MVPVoteIn):
+    rate_limit(f"vote:{match_id}", max_hits=60, window_seconds=60)
     match = await get_match_or_404(match_id)
     if is_voting_closed(match):
         raise HTTPException(400, "Voting is closed")

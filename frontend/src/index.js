@@ -22,11 +22,46 @@ root.render(
   </React.StrictMode>,
 );
 
-// Register PWA service worker
-if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
-  window.addEventListener('load', () => {
+// Register PWA service worker with update-available notification
+if ("serviceWorker" in navigator && window.location.protocol === "https:") {
+  window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register('/service-worker.js')
+      .register("/service-worker.js")
+      .then((reg) => {
+        // Notify user when a new SW has been installed and is waiting
+        const notifyUpdate = (worker) => {
+          if (!worker) return;
+          worker.addEventListener("statechange", () => {
+            if (worker.state === "installed" && navigator.serviceWorker.controller) {
+              window.dispatchEvent(
+                new CustomEvent("fairxi:update-available", { detail: { worker } }),
+              );
+            }
+          });
+        };
+        if (reg.waiting) notifyUpdate(reg.waiting);
+        reg.addEventListener("updatefound", () => notifyUpdate(reg.installing));
+      })
       .catch(() => {});
+
+    // If user accepts the reload prompt, activate the new SW before reloading.
+    window.addEventListener("fairxi:update-available", (e) => {
+      const worker = e.detail?.worker;
+      const onReload = () => {
+        try {
+          worker?.postMessage?.({ type: "SKIP_WAITING" });
+        } catch {}
+      };
+      // Attach one-time to reload event bubbling via user action (handled in App toast)
+      window.__fairxiAcceptUpdate = onReload;
+    });
+
+    // When controller changes (new SW activated), reload to pick up new assets
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
   });
 }

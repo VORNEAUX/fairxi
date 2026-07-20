@@ -6,12 +6,15 @@ import { toast } from "sonner";
 import { getSavedSquad, addMyMatch } from "@/lib/storage";
 import { Users, Trash2 } from "lucide-react";
 
-const Field = ({ label, children, testId }) => (
+const Field = ({ label, children, testId, error }) => (
   <div className="mb-6" data-testid={testId}>
     <label className="block text-[10px] font-bold uppercase tracking-[0.25em] text-[#CCFF00] mb-2">
       {label}
     </label>
     {children}
+    {error && (
+      <div className="text-red-400 text-xs mt-1.5" data-testid={`${testId}-error`}>{error}</div>
+    )}
   </div>
 );
 
@@ -28,11 +31,38 @@ export default function CreateMatch() {
     max_players: "10",
     num_teams: "2",
   });
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [squad, setSquad] = useState([]);
   const savedCount = getSavedSquad().length;
+  const refs = {
+    date_time: React.useRef(null),
+    location: React.useRef(null),
+    total_cost: React.useRef(null),
+    max_players: React.useRef(null),
+  };
 
-  const set = (k, v) => setForm({ ...form, [k]: v });
+  const set = (k, v) => {
+    setForm({ ...form, [k]: v });
+    if (errors[k]) setErrors({ ...errors, [k]: null });
+  };
+
+  const validate = () => {
+    const e = {};
+    if (!form.date_time) e.date_time = "Pick when the match kicks off.";
+    else {
+      const d = new Date(form.date_time);
+      if (isNaN(d.getTime())) e.date_time = "That date doesn't look right.";
+    }
+    if (!form.location.trim()) e.location = "Where are you playing?";
+    else if (form.location.trim().length > 120) e.location = "Location is too long (max 120 chars).";
+    const cost = parseFloat(form.total_cost);
+    if (!form.total_cost || isNaN(cost) || cost < 0) e.total_cost = "Enter the total pitch cost (0 or more).";
+    const mp = parseInt(form.max_players);
+    if (!mp || mp < 2) e.max_players = "You need at least 2 players.";
+    else if (mp > 64) e.max_players = "That's too many — cap is 64.";
+    return e;
+  };
 
   const loadSquad = () => {
     const s = getSavedSquad();
@@ -50,8 +80,12 @@ export default function CreateMatch() {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!form.date_time || !form.location || !form.total_cost) {
-      toast.error("Please fill date, location, and cost");
+    const errs = validate();
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      const firstKey = Object.keys(errs)[0];
+      refs[firstKey]?.current?.focus?.();
+      toast.error("Please check the highlighted fields");
       return;
     }
     setLoading(true);
@@ -103,21 +137,57 @@ export default function CreateMatch() {
         <Field label="Match name (optional)" testId="field-name">
           <input className={inputCls} placeholder="Friday Night 5-a-Side" value={form.name} onChange={(e) => set("name", e.target.value)} data-testid="input-name" />
         </Field>
-        <Field label="Date & time" testId="field-datetime">
-          <input type="datetime-local" className={inputCls} value={form.date_time} onChange={(e) => set("date_time", e.target.value)} data-testid="input-datetime" />
+        <Field label="Date & time" testId="field-datetime" error={errors.date_time}>
+          <input
+            ref={refs.date_time}
+            type="datetime-local"
+            className={inputCls}
+            value={form.date_time}
+            onChange={(e) => set("date_time", e.target.value)}
+            data-testid="input-datetime"
+            aria-invalid={!!errors.date_time}
+          />
         </Field>
-        <Field label="Location" testId="field-location">
-          <input className={inputCls} placeholder="Riverside Astro Pitch" value={form.location} onChange={(e) => set("location", e.target.value)} data-testid="input-location" />
+        <Field label="Location" testId="field-location" error={errors.location}>
+          <input
+            ref={refs.location}
+            className={inputCls}
+            placeholder="Riverside Astro Pitch"
+            value={form.location}
+            onChange={(e) => set("location", e.target.value)}
+            data-testid="input-location"
+            aria-invalid={!!errors.location}
+          />
         </Field>
         <div className="grid grid-cols-2 gap-6">
-          <Field label="Total pitch cost" testId="field-cost">
+          <Field label="Total pitch cost" testId="field-cost" error={errors.total_cost}>
             <div className="flex items-center">
               <span className="text-white/40 mr-1">$</span>
-              <input type="number" min="0" step="0.01" className={inputCls} placeholder="100" value={form.total_cost} onChange={(e) => set("total_cost", e.target.value)} data-testid="input-cost" />
+              <input
+                ref={refs.total_cost}
+                type="number"
+                min="0"
+                step="0.01"
+                className={inputCls}
+                placeholder="100"
+                value={form.total_cost}
+                onChange={(e) => set("total_cost", e.target.value)}
+                data-testid="input-cost"
+                aria-invalid={!!errors.total_cost}
+              />
             </div>
           </Field>
-          <Field label="Max players" testId="field-max">
-            <input type="number" min="2" className={inputCls} value={form.max_players} onChange={(e) => set("max_players", e.target.value)} data-testid="input-max" />
+          <Field label="Max players" testId="field-max" error={errors.max_players}>
+            <input
+              ref={refs.max_players}
+              type="number"
+              min="2"
+              className={inputCls}
+              value={form.max_players}
+              onChange={(e) => set("max_players", e.target.value)}
+              data-testid="input-max"
+              aria-invalid={!!errors.max_players}
+            />
           </Field>
         </div>
         <Field label="Number of teams" testId="field-teams">
