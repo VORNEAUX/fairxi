@@ -22,7 +22,40 @@ Build a mobile-first web app called FairXI that solves unfair team balancing and
 - **Frontend**: React + React Router + Tailwind + shadcn/ui + sonner. Bebas Neue (display) + Manrope (body) via Google Fonts. Volt Lime (`#CCFF00`) accent on deep-green-black base.
 - **Team balancing** in `snake_draft()`: sort by rating desc → snake distribute → single-pass same-rating swap for position variety.
 
-## Implemented (2026-02, **v1.2**)
+## Implemented (2026-02, **v1.3**)
+### Capacitor Native Wrap — infrastructure (P0)
+- `@capacitor/core|cli|android|ios|share|app` v7 installed
+- `/app/frontend/capacitor.config.json` — `appId: com.vorneaux.fairxi`, `appName: FairXI`, `webDir: build`, dark background color
+- `/app/frontend/android/` — full Android Studio project scaffold, ready to open + sign + build (needs Android Studio + user's keystore)
+- `/app/frontend/ios/` — full Xcode project scaffold, ready to open on a Mac (needs `pod install` + Apple developer account)
+- **Native-safe web code**: `recap.js` `shareOrDownloadBlob` uses `@capacitor/share` when `Capacitor.isNativePlatform()`, falls back to Web Share API + download in browsers; `index.js` SW registration and `InstallPromptContext` beforeinstallprompt listener both no-op inside the native shell
+
+### Router Unit Tests (P1)
+- 20 new tests across `test_router_matches.py`, `test_router_mvp.py`, `test_router_groups.py`, `test_router_players.py` + shared `conftest.py` (session-scoped TestClient)
+- Full backend pytest suite now **68/68 green** — protects the v1.2 split from future regressions
+
+### MOTS Confetti (P2)
+- 32-particle burst (lime + white, mixed squares/dots, randomised angles and spin) synced with the trophy pop
+- `pointer-events: none`, `aria-hidden`, keyed to threshold → new burst on each reveal cycle
+- On-brand, tasteful (~1.6s), doesn't block the backdrop-to-dismiss gesture
+
+### Store Metadata Draft (P3)
+- `/app/store_submission.md` — Play + App Store titles, short/full descriptions, keyword lists, content-rating questionnaire answers, App Privacy answers, screenshot shot list
+- `/app/native_store_checklist.md` — the exact manual steps left for the user (keystore, pod install, Xcode archive, Play Console upload, App Store Connect flow)
+
+## Store-Readiness Report (updated)
+### Ready — new in v1.3
+- Capacitor Android + iOS project scaffolds committed and ready to open
+- All web code native-safe (no Web-only APIs blow up in a WebView)
+- Complete store copy + questionnaire answers drafted
+- 20 router unit tests protect the backend from future regressions
+
+### Requires the user (manual, outside this environment)
+1. Install Android Studio locally + open `/app/frontend/android/` → generate keystore → build signed `.aab`
+2. On a Mac: install Xcode + CocoaPods → `cd /app/frontend/ios/App && pod install` → open in Xcode → Archive
+3. Pay Google Play ($25) + Apple Developer ($99/yr) fees
+4. Play Console + App Store Connect setup (see `/app/native_store_checklist.md`)
+5. Optional: commission a 2732×2732 splash source PNG (current largest icon in repo is 512px)
 ### Backend router split (P0) — zero behavior change
 - New `/app/backend/deps.py` — shared models, db client, api_router prefix, helpers (`snake_draft`, `rate_limit`, `is_voting_closed`, `get_match_or_404`, etc.)
 - Endpoints extracted into `routers/matches.py`, `routers/mvp.py`, `routers/groups.py`, `routers/players.py`
