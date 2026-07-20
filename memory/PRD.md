@@ -29,6 +29,25 @@ Build a mobile-first web app called FairXI that solves unfair team balancing and
 - No functional code changed; CRA/react-scripts continues to handle build-time linting internally
 - v1.3 regression (iteration_10): 68/68 pytest green + all frontend routes smoke-tested clean
 
+## Implemented (2026-02, **v1.6** — Launch flash fix)
+### P0 — Production DB cleanup (execution BLOCKED, not by code)
+- I do not have production credentials in this sandbox (`MONGO_URL=mongodb://localhost:27017`, `DB_NAME=test_database` — preview only). The cleanup script from v1.5 is ready and safe. User must run it against production themselves (or via Emergent Support) with the production connection string exported:
+  ```
+  cd /app/backend
+  export MONGO_URL="<production connection string>"
+  export DB_NAME="<production db name>"
+  python -m scripts.cleanup_test_data --apply   # dry-run first (no --apply) is recommended
+  ```
+  Make sure `SEED_DEMO` is NOT set to true in the production environment before restarting the backend.
+
+### P1 — Android launch flash root cause + fix
+- **Root cause**: `AppTheme` extended `Theme.AppCompat.Light.DarkActionBar` (a *light* theme) with no `windowBackground` — the OS painted white for every transient state (launcher → activity create, splash → WebView first paint). `AppTheme.NoActionBarLaunch` also used the legacy `android:background` attribute instead of `windowSplashScreenBackground`, which the Android 12+ SplashScreen API silently ignores.
+- **Fixes applied** (all under `/app/frontend/android/app/src/main/res/values/`):
+  - New `colors.xml` — `fairxi_background = #FF050A07` (matches `capacitor.config.json`).
+  - Rewrote `styles.xml`: `AppTheme` and `AppTheme.NoActionBar` now set `android:windowBackground=@color/fairxi_background`; `AppTheme.NoActionBarLaunch` sets both `windowSplashScreenBackground` (correct 12+ API) and `android:background` (fallback), plus `postSplashScreenTheme=@style/AppTheme.NoActionBar` so the hand-off after splash lands on a dark-background theme instead of the light default.
+  - `/app/frontend/public/index.html` — inline `<style>` sets `html, body { background-color: #050A07 }` so the WebView's first paint is brand-dark before any bundled CSS loads.
+- **Verified**: 71/71 backend pytest green; preview home + demo route still render correctly with the new inline background. **Real-device confirmation required from you** — sandbox has no physical Android. Rebuild the Android app in Android Studio, install on your device, and the tap → splash → app transition should show a single dark-green-black canvas throughout with no white/black flash.
+
 ## Implemented (2026-02, **v1.5** — Payment link WebView fix + DB hygiene)
 ### P0 — Payment Link opens in system browser (not WebView)
 - **Root cause**: `<a href={link} target="_blank">` on the payment deep-link. In a Capacitor WebView this opens *inside* the embedded browser, where PayPal.me/Revolut/Satispay's amount-display scripts fail silently (blank profile page, no amount).

@@ -1,22 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Base application theme. -->
+    <!-- Base application theme. Uses the FairXI brand background as the
+         windowBackground so ANY transient state (launcher → activity create,
+         splash → WebView) paints on the dark green-black surface instead of
+         flashing white. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/fairxi_background</item>
     </style>
 
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <item name="android:windowBackground">@color/fairxi_background</item>
     </style>
 
-
+    <!-- Launch theme — Android 12+ SplashScreen API.
+         windowSplashScreenBackground is the correct attribute for Theme.SplashScreen;
+         android:background is kept as a fallback for older devices that ignore the
+         modern splash attribute. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">@color/fairxi_background</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+        <item name="android:background">@color/fairxi_background</item>
     </style>
 </resources>

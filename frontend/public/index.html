@@ -28,6 +28,12 @@
         Learn how to configure a non-root public URL by running `npm run build`.
         -->
         <title>FairXI — Balanced teams. Split the pitch. Zero drama.</title>
+        <style>
+          /* Paint the brand background immediately, before any JS/CSS bundle loads.
+             Kills the white flash between WebView first-paint and React hydration
+             on Android (and any bare-page flash in a mobile browser). */
+          html, body { background-color: #050A07; color: #ffffff; margin: 0; }
+        </style>
         <script>window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
     </head>

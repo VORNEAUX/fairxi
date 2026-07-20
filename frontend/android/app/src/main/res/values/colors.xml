@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- FairXI brand background — matches capacitor.config android.backgroundColor
+         and the web app's near-black-green surface. Used as windowBackground for
+         every launch state so there's no visible flash between OS launcher →
+         splash → WebView paint. -->
+    <color name="fairxi_background">#FF050A07</color>
+</resources>
