@@ -29,6 +29,19 @@ Build a mobile-first web app called FairXI that solves unfair team balancing and
 - No functional code changed; CRA/react-scripts continues to handle build-time linting internally
 - v1.3 regression (iteration_10): 68/68 pytest green + all frontend routes smoke-tested clean
 
+## Implemented (2026-02, **v1.4** — Android install hang fix)
+### P0 — Maskable icon + manifest cleanup
+- **Root cause identified**: `manifest.json` icons declared `"purpose": "any maskable"` but artwork extended to the outer 5-8% of the canvas (no safe zone). Android's adaptive-icon renderer requires ~20% padding; when it can't produce a valid adaptive icon, some Android versions silently hang the install. The SVG entry (`favicon.svg`, `sizes: "any"`) also confused Chrome-on-Android's icon picker.
+- **Fix applied**:
+  - Generated `/app/frontend/public/icon-512-maskable.png` and `icon-192-maskable.png` — original pitch artwork scaled to 66% of canvas, centered on the brand-color background (`#050A07`). Full safe-zone padding for any launcher mask.
+  - Rewrote `manifest.json` icons array: 2× `"purpose": "any"` (original icons) + 2× `"purpose": "maskable"` (new padded icons). Dropped the SVG entry (still linked in `index.html` via `<link rel="icon">` for browser tabs).
+  - Added `"id": "/"` for stable install-app identity.
+  - Bumped SW cache to `fairxi-v3` and precached the new icons so returning users pick up the corrected manifest immediately.
+- **Verification**:
+  - `curl` confirms `/manifest.json`, `/icon-512-maskable.png`, `/icon-192-maskable.png`, `/service-worker.js` all serve 200 with correct content-type.
+  - Mask-preview render (circle + squircle) confirms pitch artwork stays fully within safe zone under any launcher mask.
+  - **Real-device install re-test required by the user** — sandbox has no physical Android device.
+
 ### Capacitor Native Wrap — infrastructure (P0)
 - `@capacitor/core|cli|android|ios|share|app` v7 installed
 - `/app/frontend/capacitor.config.json` — `appId: com.vorneaux.fairxi`, `appName: FairXI`, `webDir: build`, dark background color

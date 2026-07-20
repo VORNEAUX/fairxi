@@ -1,10 +1,12 @@
 /* FairXI service worker — minimal offline shell */
-const CACHE = 'fairxi-v2';
+const CACHE = 'fairxi-v3';
 const SHELL = [
   '/',
   '/favicon.svg',
   '/icon-192.png',
   '/icon-512.png',
+  '/icon-192-maskable.png',
+  '/icon-512-maskable.png',
   '/apple-touch-icon.png',
   '/manifest.json',
 ];
